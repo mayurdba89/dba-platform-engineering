@@ -1,0 +1,83 @@
+MongoDB installation in windows in 10 minutes : 
+1. login as root and create below file : 
+vi  /etc/yum.repos.d/mongodb-org-8.0.repo
+Add the below content and save it :
+[mongodb-org-8.0]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.0/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://pgp.mongodb.com/server-8.0.asc
+
+
+2. As root run below: 
+yum install -y mongodb-org , wait for it to finish 
+
+3. Once step 2 is completed , check the user mongod is created , and enable this user to use mongodb
+id mongod - > verify user exists 
+[root@localhost ~]# id mongod
+uid=972(mongod) gid=972(mongod) groups=972(mongod)
+
+4. Enable mongodb login ; 
+[root@localhost ~]# sudo chsh -s /bin/bash mongod
+Changing shell for mongod.
+Shell changed.
+
+5.  su - mongod
+connect to mongodb using command mongosh: -> Below error is expected as mongo service is not started
+mongosh
+
+[mongod@localhost ~]$ mongosh
+Current Mongosh Log ID: 691eddd743728989339dc29c
+Connecting to:          mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.5.9
+MongoNetworkError: connect ECONNREFUSED 127.0.0.1:27017
+
+6. Open another terminal as root and start mongo services  
+[root@localhost tmp]# systemctl start mongod
+[root@localhost tmp]# systemctl status mongod
+● mongod.service - MongoDB Database Server
+     Loaded: loaded (/usr/lib/systemd/system/mongod.service; enabled; preset: disabled)
+     Active: active (running) since Thu 2025-11-20 04:25:12 EST; 4s ago
+       Docs: https://docs.mongodb.org/manual
+   Main PID: 112853 (mongod)
+     Memory: 99.5M
+        CPU: 1.050s
+     CGroup: /system.slice/mongod.service
+             └─112853 /usr/bin/mongod -f /etc/mongod.conf
+
+Nov 20 04:25:12 localhost.localdomain systemd[1]: Started MongoDB Database Server.
+Nov 20 04:25:12 localhost.localdomain mongod[112853]: {"t":{"$date":"2025-11-20T09:25:12.910Z"},"s":"I",  "c":"CONTROL",  "id":7484500, "ctx":"main","msg":">
+Nov 20 04:25:12 localhost.localdomain mongod[112853]: {"t":{"$date":"2025-11-20T09:25:12.934Z"},"s":"I",  "c":"CONTROL",  "id":10181001,"ctx":"main","msg":">
+
+7. Once mongo service started , come back to terminal as mongod and connect to mongodb
+[mongod@localhost ~]$ mongosh
+Current Mongosh Log ID: 691eddd743728989339dc29c
+Connecting to:          mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.5.9
+MongoNetworkError: connect ECONNREFUSED 127.0.0.1:27017
+[mongod@localhost ~]$ mongosh
+Current Mongosh Log ID: 691ede844a08108e949dc29c
+Connecting to:          mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.5.9
+Using MongoDB:          8.0.16
+Using Mongosh:          2.5.9
+
+For mongosh info see: https://www.mongodb.com/docs/mongodb-shell/
+
+
+To help improve our products, anonymous usage data is collected and sent to MongoDB periodically (https://www.mongodb.com/legal/privacy-policy).
+You can opt-out by running the disableTelemetry() command.
+
+------
+   The server generated these startup warnings when booting
+   2025-11-20T04:25:14.353-05:00: Access control is not enabled for the database. Read and write access to data and configuration is unrestricted
+   2025-11-20T04:25:14.354-05:00: For customers running the current memory allocator, we suggest changing the contents of the following sysfsFile
+   2025-11-20T04:25:14.354-05:00: We suggest setting the contents of sysfsFile to 0.
+   2025-11-20T04:25:14.354-05:00: We suggest setting swappiness to 0 or 1, as swapping can cause performance problems.
+------
+
+test> show dbs
+admin    8.00 KiB
+config  12.00 KiB
+local    8.00 KiB
+test> exit
+
+

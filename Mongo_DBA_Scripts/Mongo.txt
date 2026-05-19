@@ -1,0 +1,22 @@
+Mongo DB on windows : https://www.youtube.com/watch?v=89W8MrmuHfU 
+https://www.youtube.com/watch?v=FwMwO8pXfq0
+
+
+To start mongodb : 
+on command prompt : >>cd C:\Program Files\MongoDB\Server\4.4\bin
+mongod --> to start mongodb server / services
+
+to connect to DB /; 
+on command prompt : >>cd C:\Program Files\MongoDB\Server\4.4\bin
+mongo -- Enter 
+
+******************************************************************************************************
+to create a database : use mylib 
+to insert the records in the collection / table >> db.books.insert({"name","book1"})  --> Enter --> it will insert the record into the table 
+to check all the tables present --> show collections ; --> enter 
+to find all the records inside table : db.books.find() --> Enter -- to display all data inside collection 
+******************************************************************************************************
+
+Mongodb learning : https://www.tutorialspoint.com/mongodb/mongodb_create_backup.htm#:~:text=To%20create%20backup%20of%20database,backup%20of%20your%20remote%20server.
+
+

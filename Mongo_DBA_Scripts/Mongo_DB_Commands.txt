@@ -1,0 +1,351 @@
+1. creating the database srinivas
+  > use db_name
+ ex: >use srinivas 
+
+2. list the databases
+  > show dbs
+    local      0.78125GB
+    srinivas   0.23012GB
+    test       0.23012GB
+Note: Your created database (srinivas) is not present in list. To display database, you need to insert at least one document into it by creating sample or genune collection(table)
+
+3. Dropping the Database
+  > show dbs
+    local      0.78125GB
+    srinivas   0.23012GB
+    test       0.23012GB
+ 
+  > use srinivas
+  >db.dropDatabase()                        ---> Dropping the database
+  >{ "dropped" : "srinivas", "ok" : 1 }
+
+ After dropping listing the databases
+  > show dbs
+    local      0.78125GB
+    test       0.23012GB
+
+4. Creating The collection(table) 
+   assume "srinivas" exist then follow below
+
+   > use srinivas
+   > show collections or tables
+   > db.createCollection("myinfinity")    						---> Without any options
+     { "ok" : 1 }
+   > db.createCollection("infinity", { capped : true, autoIndexId : true, size : 6142800, max : 10000 } )		---> with some options
+   
+   >show collections
+    myinfinity
+    infinity
+    system.indexes
+
+5. dropping the collection
+   > use srinivas
+   > show tables 
+     myinfinity
+    infinity
+    system.indexes
+  > db.myinfinity.drop()    ---> dropping the table
+    true
+  > show tables 
+    infinity
+    system.indexes
+
+6. Inserting the data into table
+
+   > use srinvias
+   > db.infinity.insert()   or   db.infinity.save()
+   > db.infinity.insert({
+      _id: ObjectId(5hfgadh73),
+      title: 'Project documnets', 
+      description: 'Company is became pvt ltd',
+      by: 'infintylabs pvt ltd',
+      url: 'http://www.infinitylabs.com',
+      tags: ['mongodb', 'scylla', 'mysql'],
+      likes: 200
+      })
+
+7. Find the records from table or collection
+
+  > db.infinity.find()              --> It returns all the records
+  > db.infinity.findOne()	    --> It return only one record
+  > db.infinity.find().limit(10)    --> It return 10 records only
+  > db.infinity.find().pretty()     --> It return records formatted way
+
+  > db.infinity.find({"by":"infintylabs pvt ltd"}).pretty()     --> find the value of column "by" equal to "infintylabs pvt ltd"
+  > db.infinity.find({"likes":{$lt:200}}).pretty()		--> find the value of column "likes" less than "200"
+  > db.infinity.find({"likes":{$lte:200}}).pretty()		--> find the value of column "likes" less than equal to "200"
+  > db.infinity.find({"likes":{$gt:100}}).pretty()		--> find the value of column "likes" greater than "100"
+  > db.infinity.find({"likes":{$gte:100}}).pretty()		--> find the value of column "likes" greater than equal to "100"
+  > db.infinity.find({"likes":{$ne:50}}).pretty()		--> find the value of column "likes" not equal to "50"
+
+8. Updating the records in collections
+
+  > db.infinity.update({'title':'Project documnets'},{$set:{'title':'Documents made For Mongodb'}})   --> By default mongo will update single document(record) 
+  > db.infinity.update({'title':'MongoDB Overview'}, {$set:{'title':'New MongoDB Tutorial'}},{multi:true})   --> To update multiple documents, you need to set a parameter 'multi' to true.
+
+9. Remove Or Delete the documents or records from collection
+  
+  > db.infinity.remove({'title':'MongoDB Overview'})       --> deleting the document
+  > db.infinity.remove({'title':'MongoDB Overview'},1)     --> deleting first document from collection
+  > db.infinity.remove()                                   --> deleting all documents from collection
+
+10. Selecting the required fileds for projection
+
+  > db.infinity.find({},{"title":1,"by":1,_id:0,likes:0})   --> Selecting the limited fileds from collection( here the output will shown with two fields "title" and "by")
+    {"title":"MongoDB Overview"}
+    {"by": "infintylabs pvt ltd"}
+    
+11. Limting the documents using find command
+
+  > db.infinity.find().limit(10)     --> fetching 10 documents out of 1000 documents from collection.
+
+12. Fetching the documents by skipping selective document
+  
+  > db.infinity.find().limit(2).skip(1)  --> displaying the 2 and 3 documents, first document will be skip
+
+13. Sorting the documents in MongoDB,  list of fields along with their sorting order. To specify sorting order 1 and -1 are used. 
+    1 is used for ascending order while -1 is used for descending order and if you dont specify anything sort() will display the documents in ascending order.  
+ 
+ > db.infinity.find({},{"title":1,_id:0}).sort({"title":-1})   --> will display the documents sorted by title in the descending order.
+
+14. Indexes Creation on the Fields of the Collection in ascending and descending order
+
+ > db.infinity.createIndex({ titel: -1 })    --> created a single key descending index on the "title" field
+ > db.infinity.createIndex({ titel: 1 })     --> created a single key ascending index on the "title" field
+
+For creating indexes on multiple feilds at a time :
+ > db.tbfc_snmp_traps.createIndexes([ { "documentAddedOn_epoch" : 1 },{ "CorrelationId" : 1 },{ "cenAlarmUpdatedTimestamp" : 1 },{ "cenAlarmSeverity" : 1 },{ "moduleName" : 1 },{ "CorrelationType" : 1 } ]);
+
+For More info about indexes please follow below link
+https://docs.mongodb.com/manual/core/index-text/
+
+db.telemetry_parsered_collection.dropIndex(
+***********************************************************************************************************
+***********************************************************************************************************
+***********************************************************************************************************
+***********************************************************************************************************
+DAILY USE COMMANDS FOR DBA 
+*********************************************************************************************************
+***********************************************************************************************************
+***********************************************************************************************************
+***********************************************************************************************************
+***********************************************************************************************************
+
+================================================================
+To login to prod mongo DB || login to mongodb
+$sudo su - mongod 
+$mongo --> enter
+> show dbs
+> use database mtx... 
+Primary > 
+
+================================================================================================================================
+
+To connect to ops manager VM  172.20.92.197 -->> for checking backup snapshots  
+Connect to vm via cyberark 172.20.92.197
+$sudo su - mongod
+
+Check df -h 
+and check the location and log : /opt/mongodb/mms/logs/daemon.log 
+do --> less deamon.log -->> shift+G to end  -->  ? SnapshotJob finished. JobResult: OK
+
+To check the backup pieces : Check below location : 
+/data/dbsnaps/5ef1b03c89a0003d05b1ca8c/MtxEventReplSet
+
+================================================================================================================================
+DB Admin Commands:
+rs.status()                    --> To check status replciation
+db.printSlaveReplicationInfo() --> check the status replication sync
+db.printReplicationInfo()      --> to check oplog size and event time
+db.serverStatus()              --> To get complete status of the Database
+db.serverStatus().connections  --> To get number connections
+db.version() -->> to check the version of mongodb running -- Current version we are using is V3.6.4 
+
+================================================================================================================================
+db.printSecondaryReplicationInfo() -->> New command for replication information 
+
+================================================================================================================================
+mongotop --> to check particular collection running status
+mongostat --> to check over all database status
+db.serverStatus().mem
+
+================================================================
+db.serverStatus().storageEngine -->> To get storage engine information || Should be wiredTiger
+
+================================================================
+To run the commands in secondary database run the below command on secondaryDB || to use secondary just like primary DB 
+
+rs.slaveOk();
+rs.secondaryOk() -->> new command 
+
+
+================================================================
+1. creating the database srinivas
+  > use db_name
+ ex: >use srinivas 
+
+2. list the databases
+  > show dbs
+    local      0.78125GB
+    srinivas   0.23012GB
+    test       0.23012GB
+Note: Your created database (srinivas) is not present in list. To display database, you need to insert at least one document into it by creating sample or genune collection(table)
+
+3. Dropping the Database
+  > show dbs
+    local      0.78125GB
+    srinivas   0.23012GB
+    test       0.23012GB
+ 
+  > use srinivas
+  >db.dropDatabase()                        ---> Dropping the database
+  >{ "dropped" : "srinivas", "ok" : 1 }
+
+ After dropping listing the databases
+  > show dbs
+    local      0.78125GB
+    test       0.23012GB
+
+4. Creating The collection(table) 
+   assume "srinivas" exist then follow below
+
+   > use srinivas
+   > show collections or tables
+   > db.createCollection("myinfinity")    						---> Without any options
+     { "ok" : 1 }
+   > db.createCollection("infinity", { capped : true, autoIndexId : true, size : 6142800, max : 10000 } )		---> with some options
+   
+   >show collections
+    myinfinity
+    infinity
+    system.indexes
+
+5. dropping the collection
+   > use srinivas
+   > show tables 
+     myinfinity
+    infinity
+    system.indexes
+  > db.myinfinity.drop()    ---> dropping the table
+    true
+  > show tables 
+    infinity
+    system.indexes
+
+6. Inserting the data into table
+
+   > use srinvias
+   > db.infinity.insert()   or   db.infinity.save()
+   > db.infinity.insert({
+      _id: ObjectId(5hfgadh73),
+      title: 'Project documnets', 
+      description: 'Company is became pvt ltd',
+      by: 'infintylabs pvt ltd',
+      url: 'http://www.infinitylabs.com',
+      tags: ['mongodb', 'scylla', 'mysql'],
+      likes: 200
+      })
+
+7. Find the records from table or collection
+
+  > db.infinity.find()              --> It returns all the records
+  > db.infinity.findOne()	    --> It return only one record
+  > db.infinity.find().limit(10)    --> It return 10 records only
+  > db.infinity.find().pretty()     --> It return records formatted way
+
+  > db.infinity.find({"by":"infintylabs pvt ltd"}).pretty()     --> find the value of column "by" equal to "infintylabs pvt ltd"
+  > db.infinity.find({"likes":{$lt:200}}).pretty()		--> find the value of column "likes" less than "200"
+  > db.infinity.find({"likes":{$lte:200}}).pretty()		--> find the value of column "likes" less than equal to "200"
+  > db.infinity.find({"likes":{$gt:100}}).pretty()		--> find the value of column "likes" greater than "100"
+  > db.infinity.find({"likes":{$gte:100}}).pretty()		--> find the value of column "likes" greater than equal to "100"
+  > db.infinity.find({"likes":{$ne:50}}).pretty()		--> find the value of column "likes" not equal to "50"
+
+8. Updating the records in collections
+
+  > db.infinity.update({'title':'Project documnets'},{$set:{'title':'Documents made For Mongodb'}})   --> By default mongo will update single document(record) 
+  > db.infinity.update({'title':'MongoDB Overview'}, {$set:{'title':'New MongoDB Tutorial'}},{multi:true})   --> To update multiple documents, you need to set a parameter 'multi' to true.
+
+9. Remove Or Delete the documents or records from collection
+  
+  > db.infinity.remove({'title':'MongoDB Overview'})       --> deleting the document
+  > db.infinity.remove({'title':'MongoDB Overview'},1)     --> deleting first document from collection
+  > db.infinity.remove()                                   --> deleting all documents from collection
+
+10. Selecting the required fileds for projection
+
+  > db.infinity.find({},{"title":1,"by":1,_id:0,likes:0})   --> Selecting the limited fileds from collection( here the output will shown with two fields "title" and "by")
+    {"title":"MongoDB Overview"}
+    {"by": "infintylabs pvt ltd"}
+    
+11. Limting the documents using find command
+
+  > db.infinity.find().limit(10)     --> fetching 10 documents out of 1000 documents from collection.
+
+12. Fetching the documents by skipping selective document
+  
+  > db.infinity.find().limit(2).skip(1)  --> displaying the 2 and 3 documents, first document will be skip
+
+13. Sorting the documents in MongoDB,  list of fields along with their sorting order. To specify sorting order 1 and -1 are used. 
+    1 is used for ascending order while -1 is used for descending order and if you dont specify anything sort() will display the documents in ascending order.  
+ 
+ > db.infinity.find({},{"title":1,_id:0}).sort({"title":-1})   --> will display the documents sorted by title in the descending order.
+
+14. Indexes Creation on the Fields of the Collection in ascending and descending order
+
+ > db.infinity.createIndex({ titel: -1 })    --> created a single key descending index on the "title" field
+ > db.infinity.createIndex({ titel: 1 })     --> created a single key ascending index on the "title" field
+
+For creating indexes on multiple feilds at a time :
+ > db.tbfc_snmp_traps.createIndexes([ { "documentAddedOn_epoch" : 1 },{ "CorrelationId" : 1 },{ "cenAlarmUpdatedTimestamp" : 1 },{ "cenAlarmSeverity" : 1 },{ "moduleName" : 1 },{ "CorrelationType" : 1 } ]);
+
+For More info about indexes please follow below link
+https://docs.mongodb.com/manual/core/index-text/
+
+db.getIndexes()
+db.telemetry_parsered_collection.dropIndex(index_name)
+
+
+15. Taking backup of collections 
+
+to find the where clause : 
+
+
+ db.Test_employee.find({}, { title:1 , _id:0})
+
+
+16. db.runCommand({connectionStatus : 1}) -->> show current user 
+
+
+17 . TO check all the previous snapshots for ops manager backup 
+zless /opt/mongodb/mms/logs/daemon.20210527.log.gz
+
+
+
+
+
+
+
+
+How to Install MongoDB on linux Step by Step  
+
+Link : https://www.journaldev.com/3849/install-mongodb-linux
+
+mkdir mongodb
+
+mv mongodb-linux-x86_64-3.4.7.tgz mongodb
+
+
+#cd mongodb
+
+#tar xvf mongodb-linux-x86_64-3.4.7.tgz
+
+#mv mongodb-linux-x86_64-3.4.7 mongodb
+#cd mongodb
+#echo $PATH
+
+#export PATH=$PATH:/root/mongodb/mongodb/bin
+#export PATH=$PATH:/root/mongodb/mongodb/bin
+#mkdir data
+#cd bin
+
+#./mongod --dbpath /root/mongodb/mongodb/data &
