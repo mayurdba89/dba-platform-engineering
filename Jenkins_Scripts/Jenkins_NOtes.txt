@@ -1,0 +1,501 @@
+Jenkins installation : 
+
+=====================================
+url: http://192.168.139.129:8080/
+Username and password : 
+Username : jenkinsdev
+Password : jenkinsdev123
+ADmin password :ce277c49c3344fc99978f2c9d2cfb403
+=====================================
+The complete installation has to be done as user with sudo access 
+1. check java version : 
+java -version 
+if java is not installed , install java : 
+sudo yum install java-17-openjdk -y
+
+
+2. Add jenkins repository 
+sudo wget -O /etc/yum.repos.d/jenkins.repo \
+https://pkg.jenkins.io/redhat-stable/jenkins.repo
+
+3.Install Jenkins
+sudo yum install jenkins -y
+
+[mayur@localhost cache]$ sudo systemctl stop jenkins
+[mayur@localhost cache]$ sudo rm -rf /var/cache/jenkins
+[mayur@localhost cache]$ sudo mkdir -p /var/cache/jenkins
+[mayur@localhost cache]$ sudo chown -R jenkins:jenkins /var/cache/jenkins
+[mayur@localhost cache]$ sudo chmod 755 /var/cache/jenkins
+
+
+
+4.Start Jenkins Service
+sudo systemctl start jenkins
+sudo systemctl enable jenkins
+
+5.Check status:
+sudo systemctl status jenkins
+
+6. ENable firewall ; 
+sudo firewall-cmd --permanent --add-port=8080/tcp
+sudo firewall-cmd --reload
+
+7.Access Jenkins in Browser
+http://192.168.139.129:8080
+
+8. Unlock Jenkins:
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+Copy password → paste in browser
+
+-------
+
+[root@localhost-192.168.139.129] /var/cache# sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+ce277c49c3344fc99978f2c9d2cfb403
+[root@localhost-192.168.139.129] /var/cache#
+
+--------------
+
+9. Install Suggested Plugins
+Click: Install Suggested Plugins
+Wait 5–10 mins
+
+10. 
+Create Admin User
+
+Fill:
+
+Username : jenkinsdev
+Password : jenkinsdev123
+Email
+
+11. jenkins Ready 🎉
+Dashboard URL:
+
+http://<your-vm-ip>:8080
+
+
+======================================================
+Creating first jenkins job : 
+AT the database level : 
+SQL> create user c##jenkins identified by jenkins;
+
+User created.
+
+SQL> grant dba to c##jenkins;
+
+Grant succeeded.
+
+SQL>
+
+
+===
+
+Add jenkins user to run sqlplus : 
+
+sudo usermod -aG dba jenkins
+
+
+
+sudo su - jenkins
+
+sudo mkdir -p /var/lib/jenkins/db-scripts
+sudo chown -R jenkins:jenkins /var/lib/jenkins
+
+
+vi /var/lib/jenkins/db-scripts/test.sql -> Add below in the file :
+SET HEADING ON
+SET FEEDBACK ON
+
+SELECT SYSDATE FROM DUAL;
+
+EXIT;
+
+Test manually (VERY IMPORTANT)
+
+As jenkins user: sqlplus c##jenkins/jenkins@localhost:1521/oraprod
+
+Creating job now in jenkins UI : 
+Create Job
+Click New Item
+Name: oracle-db-job
+Select: Freestyle Project
+Click OK
+
+Scroll → Build
+click: Execute Shell
+Paste
+
+#!/bin/bash
+
+export ORACLE_HOME=/u01/app/oracle/product/19c/dbhome_2
+export PATH=$ORACLE_HOME/bin:$PATH
+export ORACLE_SID=ORAPROD
+
+sqlplus -s c##jenkins/jenkins@192.168.139.129:1521/oraprod <<EOF
+
+@/var/lib/jenkins/db-scripts/test.sql
+
+EOF
+
+
+=============================================================
+Parameterized queries and advanced from jenkins : 
+
+Project : 
+What you will build
+Developer → Git (SQL scripts)
+        ↓
+Jenkins Pipeline
+        ↓
+Oracle Database (execute scripts)
+        ↓
+Logs + Status + Version control
+
+
+STEP 1: Setup Git Repo (local for now)
+
+On your VM:
+
+mkdir -p /home/mayur/db-project
+cd /home/mayur/db-project
+git init
+📄 Create SQL script
+mkdir scripts
+vi scripts/V1__create_table.sql
+
+Add:
+
+CREATE TABLE jenkins_demo (
+    id NUMBER,
+    name VARCHAR2(50),
+    created_date DATE
+);
+📄 Insert script
+vi scripts/V2__insert_data.sql
+INSERT INTO jenkins_demo VALUES (1, 'Jenkins CI/CD', SYSDATE);
+COMMIT;
+🔹 Commit to Git
+git add .
+git commit -m "Initial DB scripts"
+🔹 STEP 2: Create Jenkins Pipeline Job
+
+Go to Jenkins UI:
+
+👉 New Item → Pipeline → Name: db-deployment-pipeline
+
+🔹 STEP 3: Add Pipeline Script
+
+In Jenkins → Configure → Pipeline → paste:
+
+pipeline {
+    agent any
+
+    environment {
+        ORACLE_HOME = "/u01/app/oracle/product/19c/dbhome_2"
+        PATH = "${ORACLE_HOME}/bin:${env.PATH}"
+        DB_CONN = "c##jenkins/jenkins@//192.168.139.129:1521/ORAPROD"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                sh '''
+                rm -rf db-project
+                git clone /home/mayur/db-project
+                '''
+            }
+        }
+
+        stage('List Scripts') {
+            steps {
+                sh '''
+                echo "Available scripts:"
+                ls -lrt db-project/scripts
+                '''
+            }
+        }
+
+        stage('Execute SQL Scripts') {
+            steps {
+                sh '''
+                echo "Executing DB scripts..."
+
+                for file in db-project/scripts/*.sql
+                do
+                  echo "Running $file"
+                  sqlplus -s $DB_CONN @$file
+                done
+                '''
+            }
+        }
+
+        stage('Verify Data') {
+            steps {
+                sh '''
+                sqlplus -s $DB_CONN <<EOF
+
+                SET HEADING ON
+                SELECT * FROM jenkins_demo;
+
+                EXIT;
+EOF
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Deployment Successful'
+        }
+        failure {
+            echo '❌ Deployment Failed'
+        }
+    }
+}
+🔹 STEP 4: Run Pipeline
+
+👉 Click Build Now
+
+🔍 Expected Output (Console)
+Executing DB scripts...
+Running V1__create_table.sql
+Table created.
+
+Running V2__insert_data.sql
+1 row inserted.
+
+SELECT * FROM jenkins_demo;
+
+ID  NAME           CREATED_DATE
+1   Jenkins CI/CD  11-APR-26
+🔥 What you just built (REAL WORLD)
+
+This simulates:
+
+✔ Version-controlled DB changes
+✔ Automated deployment
+✔ Ordered execution (V1, V2…)
+✔ Validation step
+🚀 STEP 5: Make it Production-Ready (IMPORTANT)
+✅ 1. Add Version Control Table
+
+Create:
+
+CREATE TABLE schema_version (
+    version VARCHAR2(50),
+    applied_date DATE
+);
+
+👉 Track executed scripts
+
+✅ 2. Prevent re-running scripts
+
+Enhance pipeline:
+
+Check if script already applied
+Skip if exists
+✅ 3. Add rollback script
+
+Example:
+
+DROP TABLE jenkins_demo;
+✅ 4. Secure credentials (VERY IMPORTANT)
+
+Instead of hardcoding:
+
+👉 Use Jenkins Credentials Manager
+
+✅ 5. Move to GitHub (next level)
+
+Instead of local repo:
+
+git clone https://github.com/your-repo/db-project.git
+🧠 Why this project is powerful
+
+You now demonstrate:
+
+CI/CD for databases
+Automation mindset
+DevOps + DBA hybrid skill
+
+👉 This is very rare and high-paying skill
+
+🎯 Next Steps (I recommend)
+
+I can help you upgrade this to:
+
+🔥 Level 2 (Resume Killer)
+Liquibase / Flyway integration
+Schema versioning automation
+Rollback strategy
+Multi-environment (DEV → QA → PROD)
+📌 Tell me next
+
+👉 Do you want:
+
+Add version tracking (like Flyway)
+Secure credentials (production style)
+Multi-env pipeline (DEV/QA/PROD)
+
+I’ll guide step-by-step 👍
+
+
+==================================================
+The same project without git : 
+Plan (Phase 1 – No Git)
+
+Instead of Git, we’ll use:
+
+/u01/db-project/scripts
+
+👉 Jenkins will directly pick SQL files from filesystem
+
+🔹 STEP 1: Create Project Directory
+mkdir -p /u01/db-project/scripts
+🔹 STEP 2: Create SQL Scripts
+📄 Script 1
+vi /u01/db-project/scripts/V1__create_table.sql
+CREATE TABLE jenkins_demo (
+    id NUMBER,
+    name VARCHAR2(50),
+    created_date DATE
+);
+📄 Script 2
+vi /u01/db-project/scripts/V2__insert_data.sql
+INSERT INTO jenkins_demo VALUES (1, 'Jenkins CI/CD', SYSDATE);
+COMMIT;
+🔹 Step 3: Give Jenkins access
+sudo chown -R jenkins:jenkins /u01/db-project
+sudo chmod -R 755 /u01/db-project
+🔹 STEP 4: Create Jenkins Pipeline (Updated)
+
+Go to Jenkins → Pipeline job → use this script:
+
+pipeline {
+    agent any
+
+    environment {
+        ORACLE_HOME = "/u01/app/oracle/product/19c/dbhome_2"
+        PATH = "${ORACLE_HOME}/bin:${env.PATH}"
+        DB_CONN = "c##jenkins/jenkins@//192.168.139.129:1521/ORAPROD"
+        SCRIPT_DIR = "/u01/db-project/scripts"
+    }
+
+    stages {
+
+        stage('List Scripts') {
+            steps {
+                sh '''
+                echo "Listing scripts..."
+                ls -lrt $SCRIPT_DIR
+                '''
+            }
+        }
+
+        stage('Execute SQL Scripts') {
+            steps {
+                sh '''
+                echo "Executing scripts..."
+
+                for file in $SCRIPT_DIR/*.sql
+                do
+                  echo "Running $file"
+                  sqlplus -s $DB_CONN @$file
+                done
+                '''
+            }
+        }
+
+        stage('Verify Data') {
+            steps {
+                sh '''
+                sqlplus -s $DB_CONN <<EOF
+
+                SET HEADING ON
+                SELECT * FROM jenkins_demo;
+
+                EXIT;
+EOF
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Deployment Successful'
+        }
+        failure {
+            echo '❌ Deployment Failed'
+        }
+    }
+}
+🔹 STEP 5: Run Pipeline
+
+👉 Click Build Now
+
+🔍 Expected Output
+Listing scripts...
+V1__create_table.sql
+V2__insert_data.sql
+
+Executing scripts...
+Running V1__create_table.sql
+Table created.
+
+Running V2__insert_data.sql
+1 row inserted.
+
+SELECT * FROM jenkins_demo;
+
+ID  NAME           CREATED_DATE
+1   Jenkins CI/CD  11-APR-26
+🧠 What you just built (even without Git)
+
+👉 This is still CI/CD-like automation
+
+You now have:
+
+Script versioning (V1, V2 naming)
+Automated execution
+Validation step
+🚀 Phase 2 (later — when ready)
+
+We upgrade to Git:
+
+git clone repo → Jenkins → execute
+🔥 Important Improvement (DO THIS NEXT)
+
+Right now problem:
+
+👉 If you run pipeline again → scripts will fail (table exists)
+
+✅ Add safety
+
+Update V1 script:
+
+BEGIN
+   EXECUTE IMMEDIATE 'CREATE TABLE jenkins_demo (
+       id NUMBER,
+       name VARCHAR2(50),
+       created_date DATE
+   )';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -955 THEN RAISE;
+      END IF;
+END;
+/
+
+👉 This prevents failure if table exists
+
+💡 Real Learning
+
+You just built:
+
+👉 Manual Flyway-like system
+
+Without using tools — very powerful understanding

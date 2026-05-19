@@ -1,0 +1,39 @@
+#!/bin/bash
+#set -x
+# Set the ASM env to be able to use crsctl commands
+#
+#ORACLE_SID=`ps -ef | grep pmon | grep asm | awk '{print $NF}' | sed s'/asm_pmon_//' | egrep "^[+]"`
+#export ORAENV_ASK=NO
+#. oraenv > /dev/null 2>&1
+
+for X in `ps -ef | grep pmon | egrep -v "grep|\+" | awk -F"_" '{print substr( $NF, 1, length($NF)-1 ) }' | sort`
+do
+              DB=`echo $X | awk -F "|" '{print $1}'`
+
+        (ssh -q -o batchmode=yes oracle@exaccnonproddb01  << END_SSH 2> /dev/null
+                source /home/oracle/$DB.env
+                sqlplus -S / as sysdba << END_SQL
+                --------------------------------
+                -- Query customization        --
+                --------------------------------
+
+                set echo        off                                                                     ;
+                set term        off                                                                     ;
+                set wrap        on                                                                      ;
+                col name        for a50                                                                 ;
+                col value       for a60                                                                 ;
+                col host_name   for a26                                                                 ;
+                col instance_name for a18                                                               ;
+                set pages       5000                                                                    ;
+                set lines 1000
+                col FRA_location for a20
+select name,open_mode from gv\\\$database;
+show parameter cpu_count
+                --------------------------------
+                -- End of query customization --
+                --------------------------------
+END_SQL
+END_SSH
+)
+done
+#set +x

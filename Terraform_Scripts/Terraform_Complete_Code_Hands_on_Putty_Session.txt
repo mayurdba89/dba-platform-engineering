@@ -1,0 +1,1052 @@
+login as: mayur
+mayur@192.168.139.131's password:
+Activate the web console with: systemctl enable --now cockpit.socket
+
+Last login: Tue May 12 01:35:58 2026 from 192.168.139.1
+[mayur@localhost ~]$ sudo su -
+[sudo] password for mayur:
+[root@localhost ~]# sudo yum install -y yum-utils^C
+[root@localhost ~]#
+[root@localhost ~]# yum install -y yum-utils
+Last metadata expiration check: 21:37:38 ago on Mon 11 May 2026 07:22:25 AM EDT.
+Package yum-utils-4.3.0-24.0.1.el9_7.noarch is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+[root@localhost ~]# yum install -y wget unzip
+Last metadata expiration check: 21:38:05 ago on Mon 11 May 2026 07:22:25 AM EDT.
+Package wget-1.21.1-7.el9.x86_64 is already installed.
+Package unzip-6.0-56.0.1.el9.x86_64 is already installed.
+Dependencies resolved.
+=============================================================================================================================================================
+ Package                         Architecture                     Version                                  Repository                                   Size
+=============================================================================================================================================================
+Upgrading:
+ unzip                           x86_64                           6.0-59.0.1.el9                           ol9_baseos_latest                           195 k
+ wget                            x86_64                           1.21.1-8.el9_4                           ol9_appstream                               857 k
+
+Transaction Summary
+=============================================================================================================================================================
+Upgrade  2 Packages
+
+Total download size: 1.0 M
+Downloading Packages:
+(1/2): unzip-6.0-59.0.1.el9.x86_64.rpm                                                                                       834 kB/s | 195 kB     00:00
+(2/2): wget-1.21.1-8.el9_4.x86_64.rpm                                                                                        3.0 MB/s | 857 kB     00:00
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                        3.5 MB/s | 1.0 MB     00:00
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                     1/1
+  Upgrading        : wget-1.21.1-8.el9_4.x86_64                                                                                                          1/4
+  Upgrading        : unzip-6.0-59.0.1.el9.x86_64                                                                                                         2/4
+  Cleanup          : wget-1.21.1-7.el9.x86_64                                                                                                            3/4
+  Cleanup          : unzip-6.0-56.0.1.el9.x86_64                                                                                                         4/4
+  Running scriptlet: unzip-6.0-56.0.1.el9.x86_64                                                                                                         4/4
+  Verifying        : unzip-6.0-59.0.1.el9.x86_64                                                                                                         1/4
+  Verifying        : unzip-6.0-56.0.1.el9.x86_64                                                                                                         2/4
+  Verifying        : wget-1.21.1-8.el9_4.x86_64                                                                                                          3/4
+  Verifying        : wget-1.21.1-7.el9.x86_64                                                                                                            4/4
+
+Upgraded:
+  unzip-6.0-59.0.1.el9.x86_64                                                   wget-1.21.1-8.el9_4.x86_64
+
+Complete!
+[root@localhost ~]# wget https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_linux_amd64.zip
+--2026-05-12 05:00:46--  https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_linux_amd64.zip
+Resolving releases.hashicorp.com (releases.hashicorp.com)... 108.159.15.64, 108.159.15.87, 108.159.15.88, ...
+Connecting to releases.hashicorp.com (releases.hashicorp.com)|108.159.15.64|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 26744662 (26M) [application/zip]
+Saving to: ‘terraform_1.8.5_linux_amd64.zip’
+
+terraform_1.8.5_linux_amd64.zip         100%[============================================================================>]  25.50M  15.1MB/s    in 1.7s
+
+2026-05-12 05:00:49 (15.1 MB/s) - ‘terraform_1.8.5_linux_amd64.zip’ saved [26744662/26744662]
+
+[root@localhost ~]# ls -lrt
+total 26124
+-rw-r--r--. 1 root root 26744662 Jun  5  2024 terraform_1.8.5_linux_amd64.zip
+-rw-------. 1 root root     1788 Nov 24 09:29 anaconda-ks.cfg
+drwxr-xr-x. 2 root root        6 Nov 25 01:50 pg_data
+drwxr-xr-x. 3 root root       83 May 12 01:54 my-project
+[root@localhost ~]# ls -lrth
+total 26M
+-rw-r--r--. 1 root root  26M Jun  5  2024 terraform_1.8.5_linux_amd64.zip
+-rw-------. 1 root root 1.8K Nov 24 09:29 anaconda-ks.cfg
+drwxr-xr-x. 2 root root    6 Nov 25 01:50 pg_data
+drwxr-xr-x. 3 root root   83 May 12 01:54 my-project
+[root@localhost ~]# unzip terraform_1.8.5_linux_amd64.zip
+Archive:  terraform_1.8.5_linux_amd64.zip
+  inflating: LICENSE.txt
+  inflating: terraform
+[root@localhost ~]# ls -lrth
+total 110M
+-rwxr-xr-x. 1 root root  85M Jun  5  2024 terraform
+-rw-r--r--. 1 root root 4.9K Jun  5  2024 LICENSE.txt
+-rw-r--r--. 1 root root  26M Jun  5  2024 terraform_1.8.5_linux_amd64.zip
+-rw-------. 1 root root 1.8K Nov 24 09:29 anaconda-ks.cfg
+drwxr-xr-x. 2 root root    6 Nov 25 01:50 pg_data
+drwxr-xr-x. 3 root root   83 May 12 01:54 my-project
+[root@localhost ~]# mv terraform /usr/local/bin/
+[root@localhost ~]# terraform version
+Terraform v1.8.5
+on linux_amd64
+
+Your version of Terraform is out of date! The latest version
+is 1.15.2. You can update by downloading from https://www.terraform.io/downloads.html
+[root@localhost ~]# uname -a
+Linux localhost.localdomain 5.15.0-205.149.5.1.el9uek.x86_64 #2 SMP Fri Apr 5 11:29:36 PDT 2024 x86_64 x86_64 x86_64 GNU/Linux
+[root@localhost ~]# cat /etc/os-release
+NAME="Oracle Linux Server"
+VERSION="9.4"
+ID="ol"
+ID_LIKE="fedora"
+VARIANT="Server"
+VARIANT_ID="server"
+VERSION_ID="9.4"
+PLATFORM_ID="platform:el9"
+PRETTY_NAME="Oracle Linux Server 9.4"
+ANSI_COLOR="0;31"
+CPE_NAME="cpe:/o:oracle:linux:9:4:server"
+HOME_URL="https://linux.oracle.com/"
+BUG_REPORT_URL="https://github.com/oracle/oracle-linux"
+
+ORACLE_BUGZILLA_PRODUCT="Oracle Linux 9"
+ORACLE_BUGZILLA_PRODUCT_VERSION=9.4
+ORACLE_SUPPORT_PRODUCT="Oracle Linux"
+ORACLE_SUPPORT_PRODUCT_VERSION=9.4
+[root@localhost ~]# oci -version
+bash: oci: command not found...
+^C
+[root@localhost ~]#
+[root@localhost ~]#
+[root@localhost ~]# dnf -y install oraclelinux-developer-release-el9
+Last metadata expiration check: 21:41:19 ago on Mon 11 May 2026 07:22:25 AM EDT.
+Dependencies resolved.
+=============================================================================================================================================================
+ Package                                               Architecture               Version                        Repository                             Size
+=============================================================================================================================================================
+Installing:
+ oraclelinux-developer-release-el9                     x86_64                     1.0-3.el9                      ol9_baseos_latest                      14 k
+
+Transaction Summary
+=============================================================================================================================================================
+Install  1 Package
+
+Total download size: 14 k
+Installed size: 19 k
+Downloading Packages:
+oraclelinux-developer-release-el9-1.0-3.el9.x86_64.rpm                                                                        52 kB/s |  14 kB     00:00
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                         47 kB/s |  14 kB     00:00
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                     1/1
+  Installing       : oraclelinux-developer-release-el9-1.0-3.el9.x86_64                                                                                  1/1
+  Verifying        : oraclelinux-developer-release-el9-1.0-3.el9.x86_64                                                                                  1/1
+
+Installed:
+  oraclelinux-developer-release-el9-1.0-3.el9.x86_64
+
+Complete!
+[root@localhost ~]# oci -version
+bash: oci: command not found...
+^C
+[root@localhost ~]#
+[root@localhost ~]# dnf install python39-oci-cli
+Oracle Linux 9 Development Packages (x86_64)                                                                                 7.2 MB/s | 217 MB     00:30
+
+Last metadata expiration check: 0:04:28 ago on Tue 12 May 2026 05:04:17 AM EDT.
+Dependencies resolved.
+=============================================================================================================================================================
+ Package                                         Architecture                Version                                Repository                          Size
+=============================================================================================================================================================
+Installing:
+ python39-oci-cli                                noarch                      3.81.1-1.el9                           ol9_developer                       12 M
+Installing dependencies:
+ python3-arrow                                   noarch                      1.1.0-2.el9                            ol9_developer                      153 k
+ python3-certifi                                 noarch                      2020.12.5-4.el9                        ol9_developer                       33 k
+ python3-circuitbreaker                          noarch                      1.3.2-1.el9                            ol9_developer                       25 k
+ python3-importlib-metadata                      noarch                      4.12.0-2.el9                           ol9_developer                       75 k
+ python3-jmespath                                noarch                      1.0.1-1.el9_7                          ol9_appstream                       75 k
+ python3-prompt-toolkit                          noarch                      3.0.38-4.el9                           ol9_appstream                      1.0 M
+ python3-pytz                                    noarch                      2021.1-5.el9                           ol9_appstream                       73 k
+ python3-terminaltables                          noarch                      3.1.10-8.0.1.el9                       ol9_developer                       60 k
+ python3-wcwidth                                 noarch                      0.2.5-8.el9                            ol9_appstream                       65 k
+ python3-zipp                                    noarch                      3.20.1-2.el9                           ol9_developer                       48 k
+ python39-oci-sdk                                x86_64                      2.173.1-1.el9                          ol9_developer                       75 M
+
+Transaction Summary
+=============================================================================================================================================================
+Install  12 Packages
+
+Total download size: 89 M
+Installed size: 438 M
+Is this ok [y/N]: Operation aborted.
+[root@localhost ~]# dnf install python39-oci-cli
+Last metadata expiration check: 0:05:05 ago on Tue 12 May 2026 05:04:17 AM EDT.
+Dependencies resolved.
+=============================================================================================================================================================
+ Package                                         Architecture                Version                                Repository                          Size
+=============================================================================================================================================================
+Installing:
+ python39-oci-cli                                noarch                      3.81.1-1.el9                           ol9_developer                       12 M
+Installing dependencies:
+ python3-arrow                                   noarch                      1.1.0-2.el9                            ol9_developer                      153 k
+ python3-certifi                                 noarch                      2020.12.5-4.el9                        ol9_developer                       33 k
+ python3-circuitbreaker                          noarch                      1.3.2-1.el9                            ol9_developer                       25 k
+ python3-importlib-metadata                      noarch                      4.12.0-2.el9                           ol9_developer                       75 k
+ python3-jmespath                                noarch                      1.0.1-1.el9_7                          ol9_appstream                       75 k
+ python3-prompt-toolkit                          noarch                      3.0.38-4.el9                           ol9_appstream                      1.0 M
+ python3-pytz                                    noarch                      2021.1-5.el9                           ol9_appstream                       73 k
+ python3-terminaltables                          noarch                      3.1.10-8.0.1.el9                       ol9_developer                       60 k
+ python3-wcwidth                                 noarch                      0.2.5-8.el9                            ol9_appstream                       65 k
+ python3-zipp                                    noarch                      3.20.1-2.el9                           ol9_developer                       48 k
+ python39-oci-sdk                                x86_64                      2.173.1-1.el9                          ol9_developer                       75 M
+
+Transaction Summary
+=============================================================================================================================================================
+Install  12 Packages
+
+Total download size: 89 M
+Installed size: 438 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/12): python3-pytz-2021.1-5.el9.noarch.rpm                                                                                 139 kB/s |  73 kB     00:00
+(2/12): python3-prompt-toolkit-3.0.38-4.el9.noarch.rpm                                                                       1.3 MB/s | 1.0 MB     00:00
+(3/12): python3-jmespath-1.0.1-1.el9_7.noarch.rpm                                                                             17 kB/s |  75 kB     00:04
+(4/12): python3-arrow-1.1.0-2.el9.noarch.rpm                                                                                  40 kB/s | 153 kB     00:03
+(5/12): python3-wcwidth-0.2.5-8.el9.noarch.rpm                                                                                16 kB/s |  65 kB     00:04
+(6/12): python3-certifi-2020.12.5-4.el9.noarch.rpm                                                                            11 kB/s |  33 kB     00:03
+(7/12): python3-circuitbreaker-1.3.2-1.el9.noarch.rpm                                                                        7.5 kB/s |  25 kB     00:03
+(8/12): python3-importlib-metadata-4.12.0-2.el9.noarch.rpm                                                                    19 kB/s |  75 kB     00:04
+(9/12): python3-terminaltables-3.1.10-8.0.1.el9.noarch.rpm                                                                    15 kB/s |  60 kB     00:04
+(10/12): python3-zipp-3.20.1-2.el9.noarch.rpm                                                                                 11 kB/s |  48 kB     00:04
+(11/12): python39-oci-cli-3.81.1-1.el9.noarch.rpm                                                                            1.7 MB/s |  12 MB     00:07
+(12/12): python39-oci-sdk-2.173.1-1.el9.x86_64.rpm                                                                            10 MB/s |  75 MB     00:07
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                        4.7 MB/s |  89 MB     00:18
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                     1/1
+  Installing       : python3-certifi-2020.12.5-4.el9.noarch                                                                                             1/12
+  Installing       : python3-pytz-2021.1-5.el9.noarch                                                                                                   2/12
+  Installing       : python3-zipp-3.20.1-2.el9.noarch                                                                                                   3/12
+  Installing       : python3-importlib-metadata-4.12.0-2.el9.noarch                                                                                     4/12
+  Installing       : python3-terminaltables-3.1.10-8.0.1.el9.noarch                                                                                     5/12
+  Installing       : python3-circuitbreaker-1.3.2-1.el9.noarch                                                                                          6/12
+  Installing       : python39-oci-sdk-2.173.1-1.el9.x86_64                                                                                              7/12
+  Installing       : python3-arrow-1.1.0-2.el9.noarch                                                                                                   8/12
+  Installing       : python3-wcwidth-0.2.5-8.el9.noarch                                                                                                 9/12
+  Installing       : python3-prompt-toolkit-3.0.38-4.el9.noarch                                                                                        10/12
+  Installing       : python3-jmespath-1.0.1-1.el9_7.noarch                                                                                             11/12
+  Installing       : python39-oci-cli-3.81.1-1.el9.noarch                                                                                              12/12
+  Running scriptlet: python39-oci-cli-3.81.1-1.el9.noarch                                                                                              12/12
+  Verifying        : python3-jmespath-1.0.1-1.el9_7.noarch                                                                                              1/12
+  Verifying        : python3-prompt-toolkit-3.0.38-4.el9.noarch                                                                                         2/12
+  Verifying        : python3-pytz-2021.1-5.el9.noarch                                                                                                   3/12
+  Verifying        : python3-wcwidth-0.2.5-8.el9.noarch                                                                                                 4/12
+  Verifying        : python3-arrow-1.1.0-2.el9.noarch                                                                                                   5/12
+  Verifying        : python3-certifi-2020.12.5-4.el9.noarch                                                                                             6/12
+  Verifying        : python3-circuitbreaker-1.3.2-1.el9.noarch                                                                                          7/12
+  Verifying        : python3-importlib-metadata-4.12.0-2.el9.noarch                                                                                     8/12
+  Verifying        : python3-terminaltables-3.1.10-8.0.1.el9.noarch                                                                                     9/12
+  Verifying        : python3-zipp-3.20.1-2.el9.noarch                                                                                                  10/12
+  Verifying        : python39-oci-cli-3.81.1-1.el9.noarch                                                                                              11/12
+  Verifying        : python39-oci-sdk-2.173.1-1.el9.x86_64                                                                                             12/12
+
+Installed:
+  python3-arrow-1.1.0-2.el9.noarch                     python3-certifi-2020.12.5-4.el9.noarch               python3-circuitbreaker-1.3.2-1.el9.noarch
+  python3-importlib-metadata-4.12.0-2.el9.noarch       python3-jmespath-1.0.1-1.el9_7.noarch                python3-prompt-toolkit-3.0.38-4.el9.noarch
+  python3-pytz-2021.1-5.el9.noarch                     python3-terminaltables-3.1.10-8.0.1.el9.noarch       python3-wcwidth-0.2.5-8.el9.noarch
+  python3-zipp-3.20.1-2.el9.noarch                     python39-oci-cli-3.81.1-1.el9.noarch                 python39-oci-sdk-2.173.1-1.el9.x86_64
+
+Complete!
+[root@localhost ~]# mkdir -p ~/.oci
+[root@localhost ~]# cd ~/.oci
+[root@localhost .oci]# openssl genrsa -out oci_api_key.pem 2048
+[root@localhost .oci]# openssl rsa -pubout -in oci_api_key.pem -out oci_api_key_public.pem
+writing RSA key
+[root@localhost .oci]# ls -lrt
+total 8
+-rw-------. 1 root root 1704 May 12 05:13 oci_api_key.pem
+-rw-r--r--. 1 root root  451 May 12 05:13 oci_api_key_public.pem
+[root@localhost .oci]# pwd
+/root/.oci
+[root@localhost .oci]# cat oci_api_key_public.pem
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAodPbS6YY5VlIun71JR7g
+HQIa3RyOn3wpl3mtWW18H4fzyPfo8YvgWvBasFPd3CDmC5C1cqLTbV8FB7Xjx3d4
+kkEJA140TeptM5jl8LIPJu2x9xvq41byHEJDvPDgOntnzOYZsKYlsPl0G+8OuB0Q
+m8Wmx5S9gnyKIz2aelUsSWBYQHTw3VSTtkkGVFDKV4Jcmb+ns7r8j2Vcw+KNJeig
+ubANVTRY7utMq5wbbAk2Evgj3ZcjnTmuRtS4pyqVGXSgdOlhqxakuj2OPY+kiT9a
+XMyXGTqWH2TOpTC7Pcpekc5OlSSS3Zbk3d59viJP0Js2H5hurZ7BO56V9GDv03i3
+EQIDAQAB
+-----END PUBLIC KEY-----
+[root@localhost .oci]# vi ~/.oci/config
+[root@localhost .oci]# oci iam region list
+Warning: To increase security of your API key located at /root/.oci/oci_api_key.pem, append an extra line with 'OCI_API_KEY' at the end. For more information, refer to https://docs.oracle.com/iaas/Content/API/Concepts/apisigningkey.htm. To suppress the warning, set the env variable SUPPRESS_LABEL_WARNING=True
+WARNING: Permissions on /root/.oci/config are too open.
+To fix this please try executing the following command:
+oci setup repair-file-permissions --file /root/.oci/config
+Alternatively to hide this warning, you may set the environment variable, OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING:
+export OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING=True
+
+{
+  "data": [
+    {
+      "key": "AMS",
+      "name": "eu-amsterdam-1"
+    },
+    {
+      "key": "ARN",
+      "name": "eu-stockholm-1"
+    },
+    {
+      "key": "AUH",
+      "name": "me-abudhabi-1"
+    },
+    {
+      "key": "BOG",
+      "name": "sa-bogota-1"
+    },
+    {
+      "key": "BOM",
+      "name": "ap-mumbai-1"
+    },
+    {
+      "key": "CDG",
+      "name": "eu-paris-1"
+    },
+    {
+      "key": "CWL",
+      "name": "uk-cardiff-1"
+    },
+    {
+      "key": "DXB",
+      "name": "me-dubai-1"
+    },
+    {
+      "key": "FRA",
+      "name": "eu-frankfurt-1"
+    },
+    {
+      "key": "GRU",
+      "name": "sa-saopaulo-1"
+    },
+    {
+      "key": "HSG",
+      "name": "ap-batam-1"
+    },
+    {
+      "key": "HYD",
+      "name": "ap-hyderabad-1"
+    },
+    {
+      "key": "IAD",
+      "name": "us-ashburn-1"
+    },
+    {
+      "key": "ICN",
+      "name": "ap-seoul-1"
+    },
+    {
+      "key": "JBP",
+      "name": "ap-kulai-2"
+    },
+    {
+      "key": "JED",
+      "name": "me-jeddah-1"
+    },
+    {
+      "key": "JNB",
+      "name": "af-johannesburg-1"
+    },
+    {
+      "key": "KIX",
+      "name": "ap-osaka-1"
+    },
+    {
+      "key": "LEJ",
+      "name": "af-casablanca-1"
+    },
+    {
+      "key": "LHR",
+      "name": "uk-london-1"
+    },
+    {
+      "key": "LIN",
+      "name": "eu-milan-1"
+    },
+    {
+      "key": "MAD",
+      "name": "eu-madrid-1"
+    },
+    {
+      "key": "MEL",
+      "name": "ap-melbourne-1"
+    },
+    {
+      "key": "MRS",
+      "name": "eu-marseille-1"
+    },
+    {
+      "key": "MTY",
+      "name": "mx-monterrey-1"
+    },
+    {
+      "key": "MTZ",
+      "name": "il-jerusalem-1"
+    },
+    {
+      "key": "NRQ",
+      "name": "eu-turin-1"
+    },
+    {
+      "key": "NRT",
+      "name": "ap-tokyo-1"
+    },
+    {
+      "key": "ORD",
+      "name": "us-chicago-1"
+    },
+    {
+      "key": "ORF",
+      "name": "eu-madrid-3"
+    },
+    {
+      "key": "PHX",
+      "name": "us-phoenix-1"
+    },
+    {
+      "key": "QRO",
+      "name": "mx-queretaro-1"
+    },
+    {
+      "key": "RUH",
+      "name": "me-riyadh-1"
+    },
+    {
+      "key": "SCL",
+      "name": "sa-santiago-1"
+    },
+    {
+      "key": "SIN",
+      "name": "ap-singapore-1"
+    },
+    {
+      "key": "SJC",
+      "name": "us-sanjose-1"
+    },
+    {
+      "key": "SYD",
+      "name": "ap-sydney-1"
+    },
+    {
+      "key": "VAP",
+      "name": "sa-valparaiso-1"
+    },
+    {
+      "key": "VCP",
+      "name": "sa-vinhedo-1"
+    },
+    {
+      "key": "XSP",
+      "name": "ap-singapore-2"
+    },
+    {
+      "key": "YNY",
+      "name": "ap-chuncheon-1"
+    },
+    {
+      "key": "YUL",
+      "name": "ca-montreal-1"
+    },
+    {
+      "key": "YYZ",
+      "name": "ca-toronto-1"
+    },
+    {
+      "key": "ZRH",
+      "name": "eu-zurich-1"
+    }
+  ]
+}
+[root@localhost .oci]#
+[root@localhost .oci]#
+[root@localhost .oci]# cd
+[root@localhost ~]#
+[root@localhost ~]#
+[root@localhost ~]# mkdir terraform-oci
+[root@localhost ~]# cd terraform-oci
+[root@localhost terraform-oci]# vi provider.tf
+[root@localhost terraform-oci]# rm -rf provider.tf
+[root@localhost terraform-oci]# vi provider.tf
+[root@localhost terraform-oci]# vi variables.tf
+[root@localhost terraform-oci]# vi terraform.tfvars
+[root@localhost terraform-oci]# ssh-keygen -t rsa
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa):
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /root/.ssh/id_rsa
+Your public key has been saved in /root/.ssh/id_rsa.pub
+The key fingerprint is:
+SHA256:hZq363JibQUHchvdbDa4sXiLiBXbowjyJoiCFXtH/io root@localhost.localdomain
+The key's randomart image is:
++---[RSA 3072]----+
+|         . +     |
+|  .   + +.+ *    |
+|   o o *.=.* .   |
+|. + . =o*.=      |
+|++ o =o+S* .     |
+|* o o o.o.o      |
+|.o     o..       |
+|    E = +.       |
+|     o *o        |
++----[SHA256]-----+
+[root@localhost terraform-oci]# ls -lrt
+total 12
+-rw-r--r--. 1 root root 132 May 12 05:44 provider.tf
+-rw-r--r--. 1 root root  60 May 12 05:44 variables.tf
+-rw-r--r--. 1 root root 101 May 12 05:46 terraform.tfvars
+[root@localhost terraform-oci]# ls ~/.ssh
+id_rsa  id_rsa.pub
+[root@localhost terraform-oci]# ls -lrth
+total 12K
+-rw-r--r--. 1 root root 132 May 12 05:44 provider.tf
+-rw-r--r--. 1 root root  60 May 12 05:44 variables.tf
+-rw-r--r--. 1 root root 101 May 12 05:46 terraform.tfvars
+[root@localhost terraform-oci]# cat ~/.ssh/id_rsa.pub
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDMpEjyfpQAzN8oiE/juwnkJWzx04IvyjAzNnBU1wbiw4FMd58V0iHPVGFI7DF7AhiF/OsP/nln4eM0cLiselSbog68g2+Q+ZeYWTLivL9vUWYnCYbT45r+LJqwYE6hmRQOgwWS7qKwi4mkuYpiZvWbn1fjstZJyXigTeZke+br5reIMADDGW6WOdwBu+jV1k7SfI8kldiDnqC1r5AdWomfV+zAYRTOw6eSWmRLtO5CCNpmV4yQ906YxEpOQgo7ByICOZGFZMsIhtizVK+hgTdCSSHfmO1s6kwYxt10/H5Cg/aa+oU0Oc1erpbxKFNFYUuPW5juCo02wGeMDIgdiZo/3B+CburejHFbwu2RlNs+7zOxzVXBf5oW0hSxOwRqJ3e++g7qb8c2AkkXq/k+KeN5Cz5dRfzOh5J1NbbH4OXYCQ7cKkEPj6jaEJCRC+mm84huXinMonn85bi4lTvqdcOqrHOxl9JKDJKx2LTRRJ/Z4SyLfrjSLN0QubWNyUT2jJM= root@localhost.localdomain
+[root@localhost terraform-oci]# ls -lrt
+total 12
+-rw-r--r--. 1 root root 132 May 12 05:44 provider.tf
+-rw-r--r--. 1 root root  60 May 12 05:44 variables.tf
+-rw-r--r--. 1 root root 101 May 12 05:46 terraform.tfvars
+[root@localhost terraform-oci]# vi terraform.tfvars
+[root@localhost terraform-oci]# ls -lrt
+total 12
+-rw-r--r--. 1 root root 132 May 12 05:44 provider.tf
+-rw-r--r--. 1 root root  60 May 12 05:44 variables.tf
+-rw-r--r--. 1 root root 700 May 12 05:49 terraform.tfvars
+[root@localhost terraform-oci]# vi main.tf
+[root@localhost terraform-oci]# ls -lrth
+total 16K
+-rw-r--r--. 1 root root  132 May 12 05:44 provider.tf
+-rw-r--r--. 1 root root   60 May 12 05:44 variables.tf
+-rw-r--r--. 1 root root  700 May 12 05:49 terraform.tfvars
+-rw-r--r--. 1 root root 2.3K May 12 05:53 main.tf
+[root@localhost terraform-oci]# terraform init
+
+Initializing the backend...
+
+Initializing provider plugins...
+- Finding latest version of oracle/oci...
+- Installing oracle/oci v8.13.0...
+- Installed oracle/oci v8.13.0 (signed by a HashiCorp partner, key ID 1533A49284137CEB)
+
+Partner and community providers are signed by their developers.
+If you'd like to know more about provider signing, you can read about it here:
+https://www.terraform.io/docs/cli/plugins/signing.html
+
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+[root@localhost terraform-oci]# ls -lrth
+total 16K
+-rw-r--r--. 1 root root  132 May 12 05:44 provider.tf
+-rw-r--r--. 1 root root   60 May 12 05:44 variables.tf
+-rw-r--r--. 1 root root  700 May 12 05:49 terraform.tfvars
+-rw-r--r--. 1 root root 2.3K May 12 05:53 main.tf
+[root@localhost terraform-oci]#
+[root@localhost terraform-oci]#
+[root@localhost terraform-oci]# terraform validate
+Success! The configuration is valid.
+
+[root@localhost terraform-oci]#
+[root@localhost terraform-oci]#
+[root@localhost terraform-oci]# terraform plan
+data.oci_core_images.oracle_linux: Reading...
+data.oci_identity_availability_domains.ads: Reading...
+data.oci_identity_availability_domains.ads: Read complete after 0s [id=IdentityAvailabilityDomainsDataSource-2575362926]
+data.oci_core_images.oracle_linux: Read complete after 0s [id=CoreImagesDataSource-2930918378]
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # oci_core_instance.my_instance will be created
+  + resource "oci_core_instance" "my_instance" {
+      + availability_domain                 = "Itbz:AP-MUMBAI-1-AD-1"
+      + boot_volume_id                      = (known after apply)
+      + capacity_reservation_id             = (known after apply)
+      + compartment_id                      = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + compute_cluster_id                  = (known after apply)
+      + dedicated_vm_host_id                = (known after apply)
+      + defined_tags                        = (known after apply)
+      + display_name                        = "terraform-instance"
+      + extended_metadata                   = (known after apply)
+      + fault_domain                        = (known after apply)
+      + freeform_tags                       = (known after apply)
+      + hostname_label                      = (known after apply)
+      + id                                  = (known after apply)
+      + image                               = (known after apply)
+      + instance_configuration_id           = (known after apply)
+      + ipxe_script                         = (known after apply)
+      + is_ai_enterprise_enabled            = (known after apply)
+      + is_cross_numa_node                  = (known after apply)
+      + is_pv_encryption_in_transit_enabled = (known after apply)
+      + launch_mode                         = (known after apply)
+      + metadata                            = {
+          + "ssh_authorized_keys" = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDMpEjyfpQAzN8oiE/juwnkJWzx04IvyjAzNnBU1wbiw4FMd58V0iHPVGFI7DF7AhiF/OsP/nln4eM0cLiselSbog68g2+Q+ZeYWTLivL9vUWYnCYbT45r+LJqwYE6hmRQOgwWS7qKwi4mkuYpiZvWbn1fjstZJyXigTeZke+br5reIMADDGW6WOdwBu+jV1k7SfI8kldiDnqC1r5AdWomfV+zAYRTOw6eSWmRLtO5CCNpmV4yQ906YxEpOQgo7ByICOZGFZMsIhtizVK+hgTdCSSHfmO1s6kwYxt10/H5Cg/aa+oU0Oc1erpbxKFNFYUuPW5juCo02wGeMDIgdiZo/3B+CburejHFbwu2RlNs+7zOxzVXBf5oW0hSxOwRqJ3e++g7qb8c2AkkXq/k+KeN5Cz5dRfzOh5J1NbbH4OXYCQ7cKkEPj6jaEJCRC+mm84huXinMonn85bi4lTvqdcOqrHOxl9JKDJKx2LTRRJ/Z4SyLfrjSLN0QubWNyUT2jJM= root@localhost.localdomain"
+        }
+      + private_ip                          = (known after apply)
+      + public_ip                           = (known after apply)
+      + region                              = (known after apply)
+      + security_attributes                 = (known after apply)
+      + security_attributes_state           = (known after apply)
+      + shape                               = "VM.Standard.E2.1.Micro"
+      + state                               = (known after apply)
+      + subnet_id                           = (known after apply)
+      + system_tags                         = (known after apply)
+      + time_created                        = (known after apply)
+      + time_maintenance_reboot_due         = (known after apply)
+
+      + create_vnic_details {
+          + assign_ipv6ip          = (known after apply)
+          + assign_public_ip       = "true"
+          + defined_tags           = (known after apply)
+          + display_name           = (known after apply)
+          + freeform_tags          = (known after apply)
+          + hostname_label         = (known after apply)
+          + nsg_ids                = (known after apply)
+          + private_ip             = (known after apply)
+          + private_ip_id          = (known after apply)
+          + security_attributes    = (known after apply)
+          + skip_source_dest_check = (known after apply)
+          + subnet_cidr            = (known after apply)
+          + subnet_id              = (known after apply)
+          + vlan_id                = (known after apply)
+        }
+
+      + source_details {
+          + boot_volume_size_in_gbs = (known after apply)
+          + boot_volume_vpus_per_gb = (known after apply)
+          + source_id               = "ocid1.image.oc1.ap-mumbai-1.aaaaaaaaqzha3rm5vx6cp5wsgdtxajngkg36cobyqilcr53ia4o7elc6653q"
+          + source_type             = "image"
+        }
+    }
+
+  # oci_core_internet_gateway.igw will be created
+  + resource "oci_core_internet_gateway" "igw" {
+      + compartment_id = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + defined_tags   = (known after apply)
+      + display_name   = "terraform-igw"
+      + enabled        = true
+      + freeform_tags  = (known after apply)
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + state          = (known after apply)
+      + time_created   = (known after apply)
+      + vcn_id         = (known after apply)
+    }
+
+  # oci_core_route_table.rt will be created
+  + resource "oci_core_route_table" "rt" {
+      + compartment_id = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + defined_tags   = (known after apply)
+      + display_name   = (known after apply)
+      + freeform_tags  = (known after apply)
+      + id             = (known after apply)
+      + state          = (known after apply)
+      + time_created   = (known after apply)
+      + vcn_id         = (known after apply)
+
+      + route_rules {
+          + cidr_block        = (known after apply)
+          + description       = (known after apply)
+          + destination       = "0.0.0.0/0"
+          + destination_type  = "CIDR_BLOCK"
+          + network_entity_id = (known after apply)
+          + route_type        = (known after apply)
+        }
+    }
+
+  # oci_core_security_list.sl will be created
+  + resource "oci_core_security_list" "sl" {
+      + compartment_id = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + defined_tags   = (known after apply)
+      + display_name   = (known after apply)
+      + freeform_tags  = (known after apply)
+      + id             = (known after apply)
+      + state          = (known after apply)
+      + time_created   = (known after apply)
+      + vcn_id         = (known after apply)
+
+      + egress_security_rules {
+          + description      = (known after apply)
+          + destination      = "0.0.0.0/0"
+          + destination_type = (known after apply)
+          + protocol         = "all"
+          + stateless        = (known after apply)
+        }
+
+      + ingress_security_rules {
+          + description = (known after apply)
+          + protocol    = "6"
+          + source      = "0.0.0.0/0"
+          + source_type = (known after apply)
+          + stateless   = false
+
+          + tcp_options {
+              + max = 22
+              + min = 22
+            }
+        }
+      + ingress_security_rules {
+          + description = (known after apply)
+          + protocol    = "6"
+          + source      = "0.0.0.0/0"
+          + source_type = (known after apply)
+          + stateless   = false
+
+          + tcp_options {
+              + max = 80
+              + min = 80
+            }
+        }
+    }
+
+  # oci_core_subnet.my_subnet will be created
+  + resource "oci_core_subnet" "my_subnet" {
+      + availability_domain        = (known after apply)
+      + cidr_block                 = "10.0.1.0/24"
+      + compartment_id             = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + defined_tags               = (known after apply)
+      + dhcp_options_id            = (known after apply)
+      + display_name               = "terraform-subnet"
+      + dns_label                  = (known after apply)
+      + freeform_tags              = (known after apply)
+      + id                         = (known after apply)
+      + ipv4cidr_blocks            = (known after apply)
+      + ipv6cidr_block             = (known after apply)
+      + ipv6cidr_blocks            = (known after apply)
+      + ipv6virtual_router_ip      = (known after apply)
+      + prohibit_internet_ingress  = (known after apply)
+      + prohibit_public_ip_on_vnic = false
+      + route_table_id             = (known after apply)
+      + security_list_ids          = (known after apply)
+      + state                      = (known after apply)
+      + subnet_domain_name         = (known after apply)
+      + time_created               = (known after apply)
+      + vcn_id                     = (known after apply)
+      + virtual_router_ip          = (known after apply)
+      + virtual_router_mac         = (known after apply)
+    }
+
+  # oci_core_vcn.my_vcn will be created
+  + resource "oci_core_vcn" "my_vcn" {
+      + byoipv6cidr_blocks               = (known after apply)
+      + cidr_block                       = "10.0.0.0/16"
+      + cidr_blocks                      = (known after apply)
+      + compartment_id                   = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + default_dhcp_options_id          = (known after apply)
+      + default_route_table_id           = (known after apply)
+      + default_security_list_id         = (known after apply)
+      + defined_tags                     = (known after apply)
+      + display_name                     = "terraform-vcn"
+      + dns_label                        = (known after apply)
+      + freeform_tags                    = (known after apply)
+      + id                               = (known after apply)
+      + ipv6cidr_blocks                  = (known after apply)
+      + ipv6private_cidr_blocks          = (known after apply)
+      + is_ipv6enabled                   = (known after apply)
+      + is_oracle_gua_allocation_enabled = (known after apply)
+      + security_attributes              = (known after apply)
+      + state                            = (known after apply)
+      + time_created                     = (known after apply)
+      + vcn_domain_name                  = (known after apply)
+    }
+
+Plan: 6 to add, 0 to change, 0 to destroy.
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't guarantee to take exactly these actions if you run "terraform apply" now.
+[root@localhost terraform-oci]#
+[root@localhost terraform-oci]#
+[root@localhost terraform-oci]# terraform apply
+data.oci_core_images.oracle_linux: Reading...
+data.oci_identity_availability_domains.ads: Reading...
+data.oci_identity_availability_domains.ads: Read complete after 0s [id=IdentityAvailabilityDomainsDataSource-2575362926]
+data.oci_core_images.oracle_linux: Read complete after 0s [id=CoreImagesDataSource-2930918378]
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # oci_core_instance.my_instance will be created
+  + resource "oci_core_instance" "my_instance" {
+      + availability_domain                 = "Itbz:AP-MUMBAI-1-AD-1"
+      + boot_volume_id                      = (known after apply)
+      + capacity_reservation_id             = (known after apply)
+      + compartment_id                      = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + compute_cluster_id                  = (known after apply)
+      + dedicated_vm_host_id                = (known after apply)
+      + defined_tags                        = (known after apply)
+      + display_name                        = "terraform-instance"
+      + extended_metadata                   = (known after apply)
+      + fault_domain                        = (known after apply)
+      + freeform_tags                       = (known after apply)
+      + hostname_label                      = (known after apply)
+      + id                                  = (known after apply)
+      + image                               = (known after apply)
+      + instance_configuration_id           = (known after apply)
+      + ipxe_script                         = (known after apply)
+      + is_ai_enterprise_enabled            = (known after apply)
+      + is_cross_numa_node                  = (known after apply)
+      + is_pv_encryption_in_transit_enabled = (known after apply)
+      + launch_mode                         = (known after apply)
+      + metadata                            = {
+          + "ssh_authorized_keys" = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDMpEjyfpQAzN8oiE/juwnkJWzx04IvyjAzNnBU1wbiw4FMd58V0iHPVGFI7DF7AhiF/OsP/nln4eM0cLiselSbog68g2+Q+ZeYWTLivL9vUWYnCYbT45r+LJqwYE6hmRQOgwWS7qKwi4mkuYpiZvWbn1fjstZJyXigTeZke+br5reIMADDGW6WOdwBu+jV1k7SfI8kldiDnqC1r5AdWomfV+zAYRTOw6eSWmRLtO5CCNpmV4yQ906YxEpOQgo7ByICOZGFZMsIhtizVK+hgTdCSSHfmO1s6kwYxt10/H5Cg/aa+oU0Oc1erpbxKFNFYUuPW5juCo02wGeMDIgdiZo/3B+CburejHFbwu2RlNs+7zOxzVXBf5oW0hSxOwRqJ3e++g7qb8c2AkkXq/k+KeN5Cz5dRfzOh5J1NbbH4OXYCQ7cKkEPj6jaEJCRC+mm84huXinMonn85bi4lTvqdcOqrHOxl9JKDJKx2LTRRJ/Z4SyLfrjSLN0QubWNyUT2jJM= root@localhost.localdomain"
+        }
+      + private_ip                          = (known after apply)
+      + public_ip                           = (known after apply)
+      + region                              = (known after apply)
+      + security_attributes                 = (known after apply)
+      + security_attributes_state           = (known after apply)
+      + shape                               = "VM.Standard.E2.1.Micro"
+      + state                               = (known after apply)
+      + subnet_id                           = (known after apply)
+      + system_tags                         = (known after apply)
+      + time_created                        = (known after apply)
+      + time_maintenance_reboot_due         = (known after apply)
+
+      + create_vnic_details {
+          + assign_ipv6ip          = (known after apply)
+          + assign_public_ip       = "true"
+          + defined_tags           = (known after apply)
+          + display_name           = (known after apply)
+          + freeform_tags          = (known after apply)
+          + hostname_label         = (known after apply)
+          + nsg_ids                = (known after apply)
+          + private_ip             = (known after apply)
+          + private_ip_id          = (known after apply)
+          + security_attributes    = (known after apply)
+          + skip_source_dest_check = (known after apply)
+          + subnet_cidr            = (known after apply)
+          + subnet_id              = (known after apply)
+          + vlan_id                = (known after apply)
+        }
+
+      + source_details {
+          + boot_volume_size_in_gbs = (known after apply)
+          + boot_volume_vpus_per_gb = (known after apply)
+          + source_id               = "ocid1.image.oc1.ap-mumbai-1.aaaaaaaaqzha3rm5vx6cp5wsgdtxajngkg36cobyqilcr53ia4o7elc6653q"
+          + source_type             = "image"
+        }
+    }
+
+  # oci_core_internet_gateway.igw will be created
+  + resource "oci_core_internet_gateway" "igw" {
+      + compartment_id = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + defined_tags   = (known after apply)
+      + display_name   = "terraform-igw"
+      + enabled        = true
+      + freeform_tags  = (known after apply)
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + state          = (known after apply)
+      + time_created   = (known after apply)
+      + vcn_id         = (known after apply)
+    }
+
+  # oci_core_route_table.rt will be created
+  + resource "oci_core_route_table" "rt" {
+      + compartment_id = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + defined_tags   = (known after apply)
+      + display_name   = (known after apply)
+      + freeform_tags  = (known after apply)
+      + id             = (known after apply)
+      + state          = (known after apply)
+      + time_created   = (known after apply)
+      + vcn_id         = (known after apply)
+
+      + route_rules {
+          + cidr_block        = (known after apply)
+          + description       = (known after apply)
+          + destination       = "0.0.0.0/0"
+          + destination_type  = "CIDR_BLOCK"
+          + network_entity_id = (known after apply)
+          + route_type        = (known after apply)
+        }
+    }
+
+  # oci_core_security_list.sl will be created
+  + resource "oci_core_security_list" "sl" {
+      + compartment_id = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + defined_tags   = (known after apply)
+      + display_name   = (known after apply)
+      + freeform_tags  = (known after apply)
+      + id             = (known after apply)
+      + state          = (known after apply)
+      + time_created   = (known after apply)
+      + vcn_id         = (known after apply)
+
+      + egress_security_rules {
+          + description      = (known after apply)
+          + destination      = "0.0.0.0/0"
+          + destination_type = (known after apply)
+          + protocol         = "all"
+          + stateless        = (known after apply)
+        }
+
+      + ingress_security_rules {
+          + description = (known after apply)
+          + protocol    = "6"
+          + source      = "0.0.0.0/0"
+          + source_type = (known after apply)
+          + stateless   = false
+
+          + tcp_options {
+              + max = 22
+              + min = 22
+            }
+        }
+      + ingress_security_rules {
+          + description = (known after apply)
+          + protocol    = "6"
+          + source      = "0.0.0.0/0"
+          + source_type = (known after apply)
+          + stateless   = false
+
+          + tcp_options {
+              + max = 80
+              + min = 80
+            }
+        }
+    }
+
+  # oci_core_subnet.my_subnet will be created
+  + resource "oci_core_subnet" "my_subnet" {
+      + availability_domain        = (known after apply)
+      + cidr_block                 = "10.0.1.0/24"
+      + compartment_id             = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + defined_tags               = (known after apply)
+      + dhcp_options_id            = (known after apply)
+      + display_name               = "terraform-subnet"
+      + dns_label                  = (known after apply)
+      + freeform_tags              = (known after apply)
+      + id                         = (known after apply)
+      + ipv4cidr_blocks            = (known after apply)
+      + ipv6cidr_block             = (known after apply)
+      + ipv6cidr_blocks            = (known after apply)
+      + ipv6virtual_router_ip      = (known after apply)
+      + prohibit_internet_ingress  = (known after apply)
+      + prohibit_public_ip_on_vnic = false
+      + route_table_id             = (known after apply)
+      + security_list_ids          = (known after apply)
+      + state                      = (known after apply)
+      + subnet_domain_name         = (known after apply)
+      + time_created               = (known after apply)
+      + vcn_id                     = (known after apply)
+      + virtual_router_ip          = (known after apply)
+      + virtual_router_mac         = (known after apply)
+    }
+
+  # oci_core_vcn.my_vcn will be created
+  + resource "oci_core_vcn" "my_vcn" {
+      + byoipv6cidr_blocks               = (known after apply)
+      + cidr_block                       = "10.0.0.0/16"
+      + cidr_blocks                      = (known after apply)
+      + compartment_id                   = "ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la"
+      + default_dhcp_options_id          = (known after apply)
+      + default_route_table_id           = (known after apply)
+      + default_security_list_id         = (known after apply)
+      + defined_tags                     = (known after apply)
+      + display_name                     = "terraform-vcn"
+      + dns_label                        = (known after apply)
+      + freeform_tags                    = (known after apply)
+      + id                               = (known after apply)
+      + ipv6cidr_blocks                  = (known after apply)
+      + ipv6private_cidr_blocks          = (known after apply)
+      + is_ipv6enabled                   = (known after apply)
+      + is_oracle_gua_allocation_enabled = (known after apply)
+      + security_attributes              = (known after apply)
+      + state                            = (known after apply)
+      + time_created                     = (known after apply)
+      + vcn_domain_name                  = (known after apply)
+    }
+
+Plan: 6 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+oci_core_vcn.my_vcn: Creating...
+oci_core_vcn.my_vcn: Creation complete after 0s [id=ocid1.vcn.oc1.ap-mumbai-1.amaaaaaahzzyffqaypgf3uo5jqsl4psadyaw6paz7cchsm34ywaxarfgtdwq]
+oci_core_internet_gateway.igw: Creating...
+oci_core_security_list.sl: Creating...
+oci_core_internet_gateway.igw: Creation complete after 1s [id=ocid1.internetgateway.oc1.ap-mumbai-1.aaaaaaaaxhhnsreupuvnc33bbtvm6z5qhv4xvfjh7xizq27s4j2xnipkmjja]
+oci_core_security_list.sl: Creation complete after 1s [id=ocid1.securitylist.oc1.ap-mumbai-1.aaaaaaaa7q5j5gchdyado4fxlsxuqfwbrkujy7pbhvpiwxpqu7ten6urkbja]
+oci_core_route_table.rt: Creating...
+oci_core_route_table.rt: Creation complete after 0s [id=ocid1.routetable.oc1.ap-mumbai-1.aaaaaaaau3ivkfwdoaa7lainlbat23twimdk3xjcwvyrjmtxmdaplwj4thha]
+oci_core_subnet.my_subnet: Creating...
+oci_core_subnet.my_subnet: Creation complete after 3s [id=ocid1.subnet.oc1.ap-mumbai-1.aaaaaaaau2hn3w6zruty53nlctexhcfhvfc7fxdb6lbyhtowdiwhmsvcf4jq]
+oci_core_instance.my_instance: Creating...
+oci_core_instance.my_instance: Still creating... [10s elapsed]
+oci_core_instance.my_instance: Still creating... [20s elapsed]
+oci_core_instance.my_instance: Still creating... [30s elapsed]
+oci_core_instance.my_instance: Creation complete after 35s [id=ocid1.instance.oc1.ap-mumbai-1.anrg6ljrhzzyffqcf3r3o36fwkcpaojcpfd4ico3ktclxbe3iiahczv5ossa]
+
+Apply complete! Resources: 6 added, 0 changed, 0 destroyed.
+[root@localhost terraform-oci]# ssh opc@140.238.247.143
+ssh: connect to host 140.238.247.143 port 22: Connection refused
+[root@localhost terraform-oci]# ssh opc@140.238.247.143
+The authenticity of host '140.238.247.143 (140.238.247.143)' can't be established.
+ED25519 key fingerprint is SHA256:2McWukVGJIgth5SRedVtkAAcN1oDRefXylLjO0fZtAg.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '140.238.247.143' (ED25519) to the list of known hosts.
+Activate the web console with: systemctl enable --now cockpit.socket
+
+[opc@terraform-instance ~]$ df -h
+Filesystem                  Size  Used Avail Use% Mounted on
+devtmpfs                    419M     0  419M   0% /dev
+tmpfs                       473M     0  473M   0% /dev/shm
+tmpfs                       473M  6.6M  467M   2% /run
+tmpfs                       473M     0  473M   0% /sys/fs/cgroup
+/dev/mapper/ocivolume-root   36G  7.6G   28G  22% /
+/dev/sda2                  1014M  375M  640M  37% /boot
+/dev/mapper/ocivolume-oled   10G  105M  9.9G   2% /var/oled
+/dev/sda1                   100M  6.0M   94M   6% /boot/efi
+tmpfs                        95M     0   95M   0% /run/user/986
+tmpfs                        95M     0   95M   0% /run/user/1000
+[opc@terraform-instance ~]$

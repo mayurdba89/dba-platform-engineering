@@ -1,0 +1,15 @@
+“Automated Oracle RMAN backup strategy using Jenkins, including full database backups, log validation, error handling, and retention policies with secure privilege delegation.”
+
+“I implemented RMAN backup automation using Jenkins with robust error handling, including log parsing for ORA/RMAN errors, backup validation, and controlled failure handling to ensure reliability.”
+
+“I automated Oracle RMAN full database backups using Jenkins by executing shell scripts under oracle user context, with logging, scheduling, and validation.”
+
+
+
+“Designed and implemented an end-to-end database DevOps pipeline using Jenkins and Oracle RMAN, including automated backups, controlled deployments, validation, and rollback strategies.”
+
+
+“I use Jenkins to automate database operations such as deployments, backups, and health checks. Pipelines ensure consistency, reduce manual errors, and enable controlled, auditable changes across environments.”
+
+
+“A Jenkins admin manages job execution, ensures system stability, performs housekeeping like build and log cleanup, manages plugins and security, monitors disk usage, and ensures high availability of CI/CD pipelines.”

@@ -1,0 +1,427 @@
+TerraForm Learning
+==========================
+STEP 1 — Install Terraform on Linux VM
+sudo yum install -y yum-utils
+sudo yum install -y wget unzip
+Download Terraform:
+wget https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_linux_amd64.zip
+Unzip
+unzip terraform_1.8.5_linux_amd64.zip
+sudo mv terraform /usr/local/bin/
+terraform version
+
+STEP 2 — Install OCI CLI : https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm?utm_source=chatgpt.com
+Quick install :
+bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"
+Oci cli installation from oracle docs: 
+dnf -y install oraclelinux-developer-release-el9
+
+
+
+
+Accept defaults.
+Verify :
+oci --version
+
+STEP 3 — Create OCI API Key
+on linux VM :
+mkdir -p ~/.oci
+cd ~/.oci
+
+Generate key : 
+openssl genrsa -out oci_api_key.pem 2048
+
+Generate public key:
+openssl rsa -pubout -in oci_api_key.pem -out oci_api_key_public.pem
+
+STEP 4 — Upload Public Key to OCI
+OCI Console
+
+Then:
+
+Profile icon (top right)
+My Profile
+API Keys
+Add API Key
+Upload public key
+
+Upload:
+
+~/.oci/oci_api_key_public.pem
+
+OCI will show:
+
+User OCID
+Fingerprint
+Tenancy OCID
+
+Copy these.
+
+STEP 5 — Create OCI Config File
+
+vi ~/.oci/config
+
+Paste
+[DEFAULT]
+user=ocid1.user.oc1.xxxxx
+fingerprint=xx:xx:xx:xx
+tenancy=ocid1.tenancy.oc1.xxxxx
+region=ap-mumbai-1
+key_file=/home/opc/.oci/oci_api_key.pem
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+[DEFAULT]
+user=ocid1.user.oc1..aaaaaaaavbvr3jzgbvyzpbkiazkdxm35wwvoedk73teor226vemxckb2f6mq
+fingerprint=ee:ec:3d:82:e4:06:b7:f0:a5:fb:2d:1e:d1:50:75:2c
+tenancy=ocid1.tenancy.oc1..aaaaaaaaxmrz7zwkd6bhdyjlmtwrtzhyfxng7p32khpiiui5yhkt5dste7la
+region=ap-mumbai-1
+key_file=/root/.oci/oci_api_key.pem
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+test:
+oci iam region list
+
+If working → authentication successful.
+
+STEP 6 — Create Terraform Project Directory
+
+mkdir terraform-oci
+cd terraform-oci
+
+STEP 7 — Create Terraform Files
+
+--provider.tf
+
+terraform {
+  required_providers {
+    oci = {
+      source = "oracle/oci"
+    }
+  }
+}
+
+provider "oci" {
+  region = "ap-mumbai-1"
+}
+
+--variables.tf
+variable "compartment_ocid" {}
+variable "ssh_public_key" {}
+
+--terraform.tfvars
+Replace with your actual values.
+compartment_ocid = "ocid1.compartment.oc1..xxxxx"
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDMpEjyfpQAzN8oiE/juwnkJWzx04IvyjAzNnBU1wbiw4FMd58V0iHPVGFI7DF7AhiF/OsP/nln4eM0cLiselSbog68g2+Q+ZeYWTLivL9vUWYnCYbT45r+LJqwYE6hmRQOgwWS7qKwi4mkuYpiZvWbn1fjstZJyXigTeZke+br5reIMADDGW6WOdwBu+jV1k7SfI8kldiDnqC1r5AdWomfV+zAYRTOw6eSWmRLtO5CCNpmV4yQ906YxEpOQgo7ByICOZGFZMsIhtizVK+hgTdCSSHfmO1s6kwYxt10/H5Cg/aa+oU0Oc1erpbxKFNFYUuPW5juCo02wGeMDIgdiZo/3B+CburejHFbwu2RlNs+7zOxzVXBf5oW0hSxOwRqJ3e++g7qb8c2AkkXq/k+KeN5Cz5dRfzOh5J1NbbH4OXYCQ7cKkEPj6jaEJCRC+mm84huXinMonn85bi4lTvqdcOqrHOxl9JKDJKx2LTRRJ/Z4SyLfrjSLN0QubWNyUT2jJM= root@localhost.localdomain"
+
+STEP 8 — Generate SSH Key for VM Login
+ssh-keygen -t rsa
+Press Enter for defaults.
+
+Get public key:
+cat ~/.ssh/id_rsa.pub
+
+Copy full output into:
+terraform.tfvars
+
+
+STEP 9 — Create main.tf
+
+IMPORTANT:
+
+Free Tier supports:
+
+VM.Standard.E2.1.Micro
+
+Use this exact code.
+
+resource "oci_core_vcn" "my_vcn" {
+
+  cidr_block     = "10.0.0.0/16"
+  compartment_id = var.compartment_ocid
+  display_name   = "terraform-vcn"
+}
+
+resource "oci_core_internet_gateway" "igw" {
+
+  compartment_id = var.compartment_ocid
+  display_name   = "terraform-igw"
+  vcn_id         = oci_core_vcn.my_vcn.id
+}
+
+resource "oci_core_route_table" "rt" {
+
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_vcn.my_vcn.id
+
+  route_rules {
+    destination       = "0.0.0.0/0"
+    destination_type  = "CIDR_BLOCK"
+    network_entity_id = oci_core_internet_gateway.igw.id
+  }
+}
+
+resource "oci_core_security_list" "sl" {
+
+  compartment_id = var.compartment_ocid
+  vcn_id         = oci_core_vcn.my_vcn.id
+
+  ingress_security_rules {
+    protocol = "6"
+
+    source = "0.0.0.0/0"
+
+    tcp_options {
+      min = 22
+      max = 22
+    }
+  }
+
+  ingress_security_rules {
+    protocol = "6"
+
+    source = "0.0.0.0/0"
+
+    tcp_options {
+      min = 80
+      max = 80
+    }
+  }
+
+  egress_security_rules {
+    protocol    = "all"
+    destination = "0.0.0.0/0"
+  }
+}
+
+resource "oci_core_subnet" "my_subnet" {
+
+  cidr_block        = "10.0.1.0/24"
+  compartment_id    = var.compartment_ocid
+  vcn_id            = oci_core_vcn.my_vcn.id
+  route_table_id    = oci_core_route_table.rt.id
+  security_list_ids = [oci_core_security_list.sl.id]
+
+  display_name = "terraform-subnet"
+
+  prohibit_public_ip_on_vnic = false
+}
+
+resource "oci_core_instance" "my_instance" {
+
+  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+
+  compartment_id = var.compartment_ocid
+
+  display_name = "terraform-instance"
+
+  shape = "VM.Standard.E2.1.Micro"
+
+  create_vnic_details {
+    subnet_id        = oci_core_subnet.my_subnet.id
+    assign_public_ip = true
+  }
+
+  source_details {
+
+    source_type = "image"
+
+    source_id = data.oci_core_images.oracle_linux.images[0].id
+  }
+
+  metadata = {
+    ssh_authorized_keys = var.ssh_public_key
+  }
+}
+
+data "oci_identity_availability_domains" "ads" {
+  compartment_id = var.compartment_ocid
+}
+
+data "oci_core_images" "oracle_linux" {
+
+  compartment_id           = var.compartment_ocid
+  operating_system         = "Oracle Linux"
+  operating_system_version = "8"
+  shape                    = "VM.Standard.E2.1.Micro"
+}
+
+
+STEP 10 — Initialize Terraform
+
+terraform init
+Downloads OCI provider.
+
+STEP 11 — Validate
+terraform validate
+STEP 12 — Preview Changes
+terraform plan
+You will see:
+
+VCN
+subnet
+compute instance
+etc.
+
+
+STEP 13 — Create Infrastructure
+
+terraform apply
+
+Type
+Yes
+Terraform will create everything.
+
+
+STEP 14 — Verify in OCI Console
+Go to:
+
+Compute → Instances
+Networking → VCN
+
+You will see resources created automatically.
+
+STEP 15 — Connect to Instance
+Get public IP from OCI Console.
+ssh opc@<PUBLIC_IP>
+ssh opc@140.238.247.143
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+[root@localhost terraform-oci]# ssh opc@140.238.247.143
+The authenticity of host '140.238.247.143 (140.238.247.143)' can't be established.
+ED25519 key fingerprint is SHA256:2McWukVGJIgth5SRedVtkAAcN1oDRefXylLjO0fZtAg.
+This key is not known by any other names
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '140.238.247.143' (ED25519) to the list of known hosts.
+Activate the web console with: systemctl enable --now cockpit.socket
+
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Practicing terraform import : we are going to import the exisiting vm on oci cloud which was manually created ,under terraform management
+OCID of vm : ocid1.instance.oc1.ap-mumbai-1.anrg6ljrhzzyffqctcx7q7r4dp3txxrwmwfqo7au5r6533j5ervuzfaaeo2q
+
+step 1-> create a new file importvm.tf
+[root@localhost terraform-oci]# cat importvm.tf
+resource "oci_core_instance" "manual_vm" {
+}
+[root@localhost terraform-oci]#
+
+terraform import oci_core_instance.manual_vm ocid1.instance.oc1.ap-mumbai-1.anrg6ljrhzzyffqctcx7q7r4dp3txxrwmwfqo7au5r6533j5ervuzfaaeo2q
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+[root@localhost terraform-oci]# terraform import oci_core_instance.manual_vm ocid1.instance.oc1.ap-mumbai-1.anrg6ljrhzzyffqctcx7q7r4dp3txxrwmwfqo7au5r6533j5ervuzfaaeo2q
+oci_core_instance.manual_vm: Importing from ID "ocid1.instance.oc1.ap-mumbai-1.anrg6ljrhzzyffqctcx7q7r4dp3txxrwmwfqo7au5r6533j5ervuzfaaeo2q"...
+oci_core_instance.manual_vm: Import prepared!
+  Prepared oci_core_instance for import
+oci_core_instance.manual_vm: Refreshing state... [id=ocid1.instance.oc1.ap-mumbai-1.anrg6ljrhzzyffqctcx7q7r4dp3txxrwmwfqo7au5r6533j5ervuzfaaeo2q]
+data.oci_core_images.oracle_linux: Reading...
+data.oci_identity_availability_domains.ads: Reading...
+data.oci_identity_availability_domains.ads: Read complete after 0s [id=IdentityAvailabilityDomainsDataSource-2575362926]
+data.oci_core_images.oracle_linux: Read complete after 0s [id=CoreImagesDataSource-2930918378]
+
+Import successful!
+
+The resources that were imported are shown above. These resources are now in
+your Terraform state and will henceforth be managed by Terraform.
+
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+terraform state list -> This command will show the latest imported in the list :
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+[root@localhost terraform-oci]# terraform state list
+data.oci_core_images.oracle_linux
+data.oci_identity_availability_domains.ads
+oci_core_instance.manual_vm
+oci_core_instance.my_instance
+oci_core_internet_gateway.igw
+oci_core_route_table.rt
+oci_core_security_list.sl
+oci_core_subnet.my_subnet
+oci_core_vcn.my_vcn
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+Validation: 
+terraform state show oci_core_instance.manual_vm --> This command will show the latest compute instance imported . 
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Creating autonomous database using terraform in OCI 
+Step 1-> cd ~/terraform-oci
+
+STEP 2—> Create New Terraform File
+adb.tf
+
+cat adb.tf
+resource "oci_database_autonomous_database" "puntrdb" {
+
+  compartment_id = var.compartment_ocid
+
+  db_name      = "PUNTRDB"
+  display_name = "puntrdb"
+
+  db_workload = "OLTP"
+
+  is_free_tier = true
+
+  cpu_core_count = 1
+
+  data_storage_size_in_tbs = 1
+
+  admin_password = "Welcome_1234"
+
+}
+
+
+Step 3-> STEP 4 — Save File wq!
+
+Step 4-> Validate terraform
+terraform validate
+
+stepp 5:  terraform plan 
+
+step 6: terraform apply -> This will create the ADB instance 
+
+
+
+
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+terraform distroy : for distroying any terraform infra , in this case we will destroy the imported terraform VM instance 
+
+step 1-> vi importvm.tf
+
+resource "oci_core_instance" "manual_vm" {
+
+  availability_domain = "Itbz:AP-MUMBAI-1-AD-1"
+
+  compartment_id = var.compartment_ocid
+
+  shape = "VM.Standard.E2.1.Micro"
+
+  create_vnic_details {
+    subnet_id = oci_core_subnet.my_subnet.id
+  }
+
+  source_details {
+    source_type = "image"
+    source_id = data.oci_core_images.oracle_linux.images[0].id
+  }
+}
+
+Step 2-> terraform state show oci_core_instance.manual_vm
+step 3->  terraform destroy -target=oci_core_instance.manual_vm
+
+
+

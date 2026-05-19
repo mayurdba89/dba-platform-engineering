@@ -1,0 +1,279 @@
+For a deeper check, use the pgstattuple extension:
+
+CREATE EXTENSION IF NOT EXISTS pgstattuple;
+SELECT relname, 
+ pg_size_pretty(pg_total_relation_size(relid)) AS table_size, 
+ (100 * (pgstattuple(relid)).dead_tuple_percent) AS dead_tuple_percentage
+FROM pg_stat_user_tables
+ORDER BY dead_tuple_percentage DESC;
+
+
+If n_dead_tup is high, vacuuming is needed!If dead tuple percentage > 10%, table bloat is affecting performance.
+
+How to Fix Dead Tuple Issues
+
+1️ Run Manual Vacuum & Index Cleanup
+
+✔ Standard cleanup (safe to run anytime):
+
+VACUUM ANALYZE;
+
+✔ Aggressive cleanup (locks the table, use in maintenance windows):
+
+VACUUM FULL my_table;
+
+✔ Rebuild indexes to remove bloat from indexes:
+
+REINDEX TABLE my_table;
+
+2️ Optimize Autovacuum for Better Performance
+
+Modify postgresql.conf to prevent dead tuple buildup:
+
+autovacuum_vacuum_scale_factor = 0.05
+autovacuum_max_workers = 5
+autovacuum_naptime = 30s
+autovacuum_vacuum_cost_limit = 2000
+autovacuum_vacuum_cost_delay = 5ms
+
+✅ This ensures vacuum runs more frequently and efficiently!
+
+📊 Monitor & Automate Dead Tuple Cleanup
+
+Enable autovacuum logging for better monitoring:
+
+log_autovacuum_min_duration = 0
+
+Track running autovacuum processes:
+
+SELECT pid, age(datfrozenxid), relname, state, query 
+FROM pg_stat_activity 
+WHERE query LIKE 'autovacuum%';
+
+🚀 Final Takeaways
+
+✅ Dead tuples slow down queries, increase disk usage, and bloat indexes.
+✅ Use VACUUM ANALYZE regularly to keep tables optimized.
+✅ Tune autovacuum settings to clean up dead tuples before they become a problem.
+✅ Monitor & automate vacuuming to maintain a high-performance PostgreSQL database.
+
+If you’re noticing slow queries or high storage usage, check for dead tuples! 
+
+
+
+
+Implementing vaccuming : 
+1. Create table : 
+
+
+CREATE TABLE employees (
+    emp_id SERIAL PRIMARY KEY,
+    emp_name VARCHAR(50),
+    city VARCHAR(50),
+    salary NUMERIC(10,2),
+    last_updated TIMESTAMP DEFAULT now()
+);
+
+2. Insert sample data : 
+INSERT INTO employees (emp_name, city, salary)
+SELECT
+    'Employee_' || gs.i,
+    CASE WHEN gs.i % 2 = 0 THEN 'Pune' ELSE 'Delhi' END,
+    50000 + (random() * 10000)
+FROM generate_series(1, 500) AS gs(i);
+
+
+3. Check Table Stats
+SELECT relname, n_live_tup, n_dead_tup
+FROM pg_stat_user_tables
+WHERE relname = 'employees';
+
+
+Note: n_live_tup → live tuples (active rows)
+n_dead_tup → dead tuples (deleted or updated rows)
+
+check dead tuples: 
+SELECT relname, n_live_tup, n_dead_tup, last_autovacuum 
+FROM pg_stat_user_tables 
+ORDER BY n_dead_tup DESC;
+
+4. Step 5 Simulate Updates and Deletes
+
+-- Update 200 rows
+UPDATE employees
+SET salary = salary + 5000,
+    last_updated = now()
+WHERE emp_id <= 200;
+
+-- Delete 100 rows
+DELETE FROM employees
+WHERE emp_id BETWEEN 100 AND 200;
+
+
+5. Now check stats again:
+
+SELECT relname, n_live_tup, n_dead_tup
+FROM pg_stat_user_tables
+WHERE relname = 'employees';
+Note : You should now see n_dead_tup > 0, meaning the table has dead tuples (space not yet reclaimed).
+
+6. Run VACUUM
+VACUUM employees;
+
+for detailed output:
+
+VACUUM VERBOSE employees;
+
+You’ll see messages like:
+
+INFO:  vacuuming "public.employees"
+INFO:  "employees": removed 100 dead row versions
+
+7: Check Again
+SELECT relname, n_live_tup, n_dead_tup
+FROM pg_stat_user_tables
+WHERE relname = 'employees';
+You should see n_dead_tup = 0 again. ✅
+
+8.Optional — FULL Vacuum (Space Reclamation)
+If you want to physically reclaim disk space, use:
+
+VACUUM FULL employees;
+
+9. Autovacuum Check (optional)
+
+PostgreSQL has a background autovacuum daemon, which triggers automatically when:
+
+Dead tuples exceed a certain percentage threshold.
+
+To see if autovacuum is running:
+
+SELECT pid, relname, query
+FROM pg_stat_activity
+WHERE query LIKE '%vacuum%';
+
+10. View Table Size Before and After
+
+SELECT pg_size_pretty(pg_total_relation_size('employees')) AS size;
+
+Vaccum Full ; 
+
+Check Current Table and Index Size
+
+SELECT
+    relname AS table_name,
+    pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
+    pg_size_pretty(pg_relation_size(relid)) AS table_size,
+    pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) AS index_size
+FROM pg_catalog.pg_statio_user_tables
+WHERE relname = 'employees';
+
+Step 2 — Create Bloat (simulate real-world updates/deletes)
+UPDATE employees
+SET salary = salary + (random() * 1000)
+WHERE emp_id <= 1000;
+
+DELETE FROM employees
+WHERE emp_id BETWEEN 100 AND 300;
+
+
+Step 3 — Check Tuple Stats
+SELECT
+    relname,
+    n_live_tup,
+    n_dead_tup
+FROM pg_stat_user_tables
+WHERE relname = 'employees';
+
+Step 4 — Check Size Again (Before Vacuum)
+SELECT
+    relname AS table_name,
+    pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
+    pg_size_pretty(pg_relation_size(relid)) AS table_size,
+    pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) AS index_size
+FROM pg_catalog.pg_statio_user_tables
+WHERE relname = 'employees';
+That’s because PostgreSQL doesn’t reclaim space automatically — it just marks tuples as dead.
+
+Step 5 — Run VACUUM FULL
+Now reclaim physical space:
+
+VACUUM FULL VERBOSE employees;
+
+Step 6 — Check Size Again (After Vacuum)
+SELECT
+    relname AS table_name,
+    pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
+    pg_size_pretty(pg_relation_size(relid)) AS table_size,
+    pg_size_pretty(pg_total_relation_size(relid) - pg_relation_size(relid)) AS index_size
+FROM pg_catalog.pg_statio_user_tables
+WHERE relname = 'employees';
+
+You’ll now see total_size and table_size reduced — that’s the reclaimed space.
+
+
+Bonus: Optional Bloat Estimation Query (No Extensions Needed)
+
+If you want to roughly estimate bloat %, run this (approximation):
+
+WITH table_stats AS (
+  SELECT
+    relname AS table_name,
+    n_live_tup,
+    n_dead_tup,
+    n_dead_tup::float / (n_live_tup + 1) * 100 AS dead_tuple_percent
+  FROM pg_stat_user_tables
+  WHERE relname = 'employees'
+)
+SELECT
+  table_name,
+  n_live_tup,
+  n_dead_tup,
+  round(dead_tuple_percent, 2) AS dead_tuple_percent
+FROM table_stats;
+
+
+This shows the percentage of dead tuples, helping you decide if manual vacuum is worth it.
+
+
+
+
+
+
+=========================================================================
+
+vac_practice=#
+vac_practice=#  SELECT relname, n_live_tup, n_dead_tup
+FROM pg_stat_user_tables
+WHERE relname = 'employees';
+  relname  | n_live_tup | n_dead_tup
+-----------+------------+------------
+ employees |        399 |         99
+(1 row)
+
+vac_practice=# SELECT pid, age(datfrozenxid), relname, state, query
+FROM pg_stat_activity
+WHERE query LIKE 'autovacuum%';
+ERROR:  column "datfrozenxid" does not exist
+LINE 1: SELECT pid, age(datfrozenxid), relname, state, query
+                        ^
+vac_practice=#
+vac_practice=#
+vac_practice=# VACUUM employees;
+VACUUM
+vac_practice=#  SELECT relname, n_live_tup, n_dead_tup
+FROM pg_stat_user_tables
+WHERE relname = 'employees';
+  relname  | n_live_tup | n_dead_tup
+-----------+------------+------------
+ employees |        399 |          0
+(1 row)
+
+vac_practice=#
+vac_practice=#
+
+
+========================================================
+
+
+

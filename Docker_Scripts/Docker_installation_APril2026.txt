@@ -1,0 +1,49 @@
+sudo dnf install -y yum-utils
+
+--Add Docker repo
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+--Install Docker
+
+sudo dnf install -y docker-ce docker-ce-cli containerd.io
+
+--Start Docker
+
+sudo systemctl start docker
+sudo systemctl enable docker
+
+
+--Verify
+docker --version
+
+--Optional (avoid sudo every time)
+sudo usermod -aG docker $USER
+newgrp docker
+
+
+--Once Docker works, run:
+docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=admin postgres:15
+
+--Redis :
+docker run -d  --name redis-dev  -p 6379:6379 redis:7
+
+--connect to redis : 
+redis-cli -h localhost -p 6379
+
+--verify container : 
+docker ps
+
+==========================================================================
+DOcker use case : for running linux environment on windows machine using a docker image available publically 
+docker on windows desktop : 
+Reference : https://www.youtube.com/watch?v=CLh2ACdXNbc
+https://hub.docker.com/r/techworldwithnana/youtube/tags
+
+
+STeps to linux using docker on windows desktop
+1. Install docker for windows https://docs.docker.com/desktop/setup/install/windows-install/
+2.  On windwos command prompt run :
+docker pull techworldwithnana/youtube:linux-tutorial   -> This command will pull the image on the local desktop 
+docker run -it techworldwithnana/youtube:linux-tutorial  -> This command will allow you to connect to linux terminal of the downloaded image
+
+

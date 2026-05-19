@@ -1,0 +1,456 @@
+Zoom link : https://us06web.zoom.us/j/89458071770?pwd=z595RVhmmZbeemIxQUe8nDWr2DGtpf.1
+VM Details: 
+IP : 192.168.139.128
+192.168.139.129 - oRA VM 
+password : post 
+
+Main binary directory :  /usr/pgsql-15/bin 
+user directory : /pg_data/data1
+
+=======================================================================================================================================
+{Automatic installation ||yum installation}
+Installation of postgres on linux using yum installation .By default postgres gets installed in the location : /usr/pgsql-15/bin
+yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %{rhel})-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+yum -y module disable postgresql
+
+yum install -y postgresql15 postgresql15-server
+
+
+mkdir /u01/pg_data
+mkdir /u01/archives
+mkdir /u01/pg_backup
+[root@localhost u01]# chown -R postgres:postgres /u01/pg_data
+[root@localhost u01]# chown -R postgres:postgres /u01/archives
+[root@localhost u01]#  chown -R postgres:postgres /u01/pg_backup
+[root@localhost u01]#
+
+[root@localhost data1]# su  - postgres
+[postgres@localhost ~]$ cd /usr/pgsql-15/bin
+
+[postgres@localhost bin]$ ./initdb -D /u01/pg_data/data1  -> start the cluser 
+
+[postgres@localhost bin]$ ./pg_ctl -D /u01/pg_data/data1 -l /u01/pg_data/data1/logfile start --> start the database 
+
+
+=====================================================================================================
+
+
+
+Important daily use commands :
+
+locate postgres.conf   -> Shows the data directories in the server 
+psql -p 5433
+./pg_ctl restart -D /pg_data/data1 
+
+==================================
+Directory for postgres installation
+===================================
+/boot 5gb 
+/home 5gb 
+/var 5gb 
+swap 4gb 
+biosboot 4gb  --compulsory
+
+/pg_data 8gb 
+/pg_backup 8gb 
+/archives 8gb 
+/tmp 5gb 
+===================================
+
+which version of postgres
+postgres=# select version();
+
+======================
+creating cluster
+======================
+[postgres@localhost ~]$ cd /usr/pgsql-15/bin
+[postgres@localhost bin]$ ./initdb -D /pg_data/data1
+
+==============================
+Starting cluster :
+==============================
+
+/pg_data/data1
+./pg_ctl -D /pg_data/data1 start
+
+=========================
+stopping cluster
+===========================
+pg_ctl -D /pg_data/data1 stop
+
+==============
+Bash profile
+===============
+export PATH=/usr/pgsql-15/bin:$PATH
+export PATH
+=======================================
+Environment file 
+=======================================
+postgres_5432.env 
+PATH=$PATH:HOME/bin
+export PATH=/usr/pgsql-15/bin:$PATH
+export PGDATA=/pg_data/data1
+export PGPORT=5432
+
+postgres_5433.env 
+PATH=$PATH:HOME/bin
+export PATH=/usr/pgsql-15/bin:$PATH
+export PGDATA=/pg_data/data2
+export PGPORT=5433
+
+postgres_5434.env
+PATH=$PATH:HOME/bin
+export PATH=/usr/pgsql-15/bin:$PATH
+export PGDATA=/pg_data/datacluster1
+export PGPORT=5434
+
+=============================
+Creating and connecting to the database :
+
+postgres=# create database newdb10x;
+CREATE DATABASE
+postgres=# \l
+
+connect to database 
+postgres=# \c newdb10x
+You are now connected to database "newdb10x" as user "postgres".
+newdb10x=#
+
+
+========================================================================================
+yum list installed| grep postgres -> to check packages for postgres 
+/usr/pgsql-15/bin ->Binary location
+ /pg_data/data1/ -> Data directory location
+PG home directory where all the executables are present 
+=======================================================================================
+
+[root@localhost data1]# su - postgres
+cd[postgres@localhost ~]$ cd /usr/pgsql-15/bin
+[postgres@localhost bin]$ ./initdb -D /pg_data/data1/
+The files belonging to this database system will be owned by user "postgres".
+This user must also own the server process.
+
+The database cluster will be initialized with locale "en_US.UTF-8".
+The default database encoding has accordingly been set to "UTF8".
+The default text search configuration will be set to "english".
+
+Data page checksums are disabled.
+
+fixing permissions on existing directory /pg_data/data1 ... ok
+creating subdirectories ... ok
+selecting dynamic shared memory implementation ... posix
+selecting default max_connections ... 100
+selecting default shared_buffers ... 128MB
+selecting default time zone ... America/New_York
+creating configuration files ... ok
+running bootstrap script ... ok
+performing post-bootstrap initialization ... ok
+syncing data to disk ... ok
+
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+
+Success. You can now start the database server using:
+
+    pg_ctl -D /pg_data/data1/ -l logfile start
+
+[postgres@localhost bin]$
+
+==================================================================================================================
+Starting postgres DB cluster : 
+[postgres@localhost bin]$ ./pg_ctl -D /pg_data/data1 start
+waiting for server to start....2025-04-07 06:35:48.116 EDT [11701] LOG:  redirecting log output to logging collector process
+2025-04-07 06:35:48.116 EDT [11701] HINT:  Future log output will appear in directory "log".
+ done
+server started
+[postgres@localhost bin]$
+
+===================================================================================================================
+Background processes : 
+
+[postgres@localhost data1]$ ps -ef | grep postgres
+root       11504    9883  0 06:29 pts/1    00:00:00 su - postgres
+postgres   11505   11504  0 06:29 pts/1    00:00:00 -bash
+postgres   11701       1  0 06:35 ?        00:00:00 /usr/pgsql-15/bin/postgres -D /pg_data/data1
+postgres   11702   11701  0 06:35 ?        00:00:00 postgres: logger     ===> Background process
+postgres   11703   11701  0 06:35 ?        00:00:00 postgres: checkpointer ===> Background process
+postgres   11704   11701  0 06:35 ?        00:00:00 postgres: background writer ===> Background process
+postgres   11706   11701  0 06:35 ?        00:00:00 postgres: walwriter ===> Background process
+postgres   11707   11701  0 06:35 ?        00:00:00 postgres: autovacuum launcher ===> Background process
+postgres   11708   11701  0 06:35 ?        00:00:00 postgres: logical replication launcher ===> Background process
+postgres   11965   11505  0 06:51 pts/1    00:00:00 ps -ef
+postgres   11966   11505  0 06:51 pts/1    00:00:00 grep --color=auto postgres
+[postgres@localhost data1]$
+
+starting the cluster: 
+pg_ctl -D /pg_data/data2/ start
+
+
+./initdb -D /pg_data/data2/
+
+
+pg_ctl -D /pg_data/data2/ start
+
+
+ select name,setting, unit from pg_Settings where context='internal';
+ 
+
+ pg_ctl stop [-D datadir] [-m s[mart] | f[ast] | i[mmediate] ] [-W] [-t seconds] [-s]
+ ==================================================================
+ using pgbadger 
+ [postgres@localhost ~]$ cd /pg_data/data2
+[postgres@localhost data2]$ cd log
+[postgres@localhost log]$ ls -lrt
+total 16
+-rw-------. 1 postgres postgres 2216 Apr  9 10:13 postgresql-Wed.log
+-rw-------. 1 postgres postgres 1028 Apr 11 10:12 postgresql-Fri.log
+-rw-------. 1 postgres postgres 6597 Apr 14 07:29 postgresql-Sun.log
+-rw-------. 1 postgres postgres    0 Apr 14 07:29 postgresql-Mon.log
+[postgres@localhost log]$ date
+Mon Apr 14 07:30:21 AM EDT 2025
+[postgres@localhost log]$ pgbadger postgresql-Sun.log
+[========================>] Parsed 6597 bytes of 6597 (100.00%), queries: 0, events: 8
+LOG: Ok, generating html report...
+[postgres@localhost log]$
+
+Syntax is pgpadger <logfilename.html>
+======================================================================================================
+Executing the sqlfile in postgres 
+postgres=# .\i pg_collector.sql
+
+======================================================================================================
+3 important tools : 
+pgbadger : performance management , you can reads the logs in the html format 
+pgcollector(rarely used): metrics collection 
+pgmetrics :collects and displays various information and statistics from a
+running PostgreSQL server to aid in troubleshooting, monitoring and automation
+
+=================================================
+
+postgres=# show port;
+postgres=# show port;
+ port
+------
+ 5433
+(1 row)
+
+
+========================================================================================================
+Check archive log mode || Archivelog mode 
+postgres=# show archive_mode;
+ archive_mode
+--------------
+ off
+(1 row)
+
+postgres=#
+postgres=# select name,settings from pg_settings where name like 'archive%';
+          name           |  setting
+-------------------------+------------
+ archive_cleanup_command |
+ archive_command         | (disabled)
+ archive_library         |
+ archive_mode            | off
+ archive_timeout         | 0
+(5 rows)
+
+postgres=# alter system set archive_command to 'cp %p /archives/cluster_2_archives/%f';
+ALTER SYSTEM
+postgres=# \q
+[postgres@localhost ~]$ pg_ctl restart -D /pg_data/data2
+waiting for server to shut down.... done
+server stopped
+waiting for server to start....2025-04-14 10:16:51.546 EDT [32365] LOG:  redirecting log output to logging collector process
+2025-04-14 10:16:51.546 EDT [32365] HINT:  Future log output will appear in directory "log".
+ done
+server started
+postgres=# show archive_mode;
+ archive_mode
+--------------
+ on
+(1 row)
+
+postgres=# select name,setting from  pg_settings where name like 'archive%';
+          name           |                setting
+-------------------------+---------------------------------------
+ archive_cleanup_command |
+ archive_command         | cp %p /archives/cluster_2_archives/%f
+ archive_library         |
+ archive_mode            | on
+ archive_timeout         | 0
+(5 rows)
+
+postgres=#
+postgres=# show log_directory;
+ log_directory
+---------------
+ log
+(1 row)
+
+postgres=# show log_filename;
+   log_filename
+-------------------
+ postgresql-%a.log
+(1 row)
+========================================================
+listing schemas 
+postgres=# \dn
+=====================================================================
+Cloning a database   :Clone database 
+
+\dt -->  list tables 
+\c -->co
+
+postgres=# create database edbstore10x_clone template=edbstore10x;
+ERROR:  source database "edbstore10x" is being accessed by other users
+DETAIL:  There is 1 other session using the database.
+postgres=# create database edbstore10x_clone template=edbstore10x;
+CREATE DATABASE
+postgres=# \l
+                                                     List of databases
+       Name        |  Owner   | Encoding |   Collate   |    Ctype    | ICU Locale | Locale Provider |   Access privileges
+-------------------+----------+----------+-------------+-------------+------------+-----------------+-----------------------
+ edbstore10x       | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |            | libc            |
+ edbstore10x_clone | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |            | libc            |
+ postgres          | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |            | libc            |
+ template0         | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |            | libc            | =c/postgres          +
+                   |          |          |             |             |            |                 | postgres=CTc/postgres
+ template1         | postgres | UTF8     | en_US.UTF-8 | en_US.UTF-8 |            | libc            | =c/postgres          +
+                   |          |          |             |             |            |                 | postgres=CTc/postgres
+(5 rows)
+
+postgres=#
+===================================================================
+drop database || dropping database : from PG13 onwards , you can drop a database forcefully even if it has existing connections 
+#drop database exdbtestdb with (FORCE); 
+===========================================================================
+./pg_restore : utility to load data into the database :
+
+psql -d databasename -c "select * from employee"
+
+Sample output:
+[postgres@localhost ~]$ cd /usr/pgsql-15/bin
+[postgres@localhost bin]$ ./psql -d edbstore10x -c "select * from dept"
+ deptno |   dname    |   loc
+--------+------------+----------
+     10 | ACCOUNTING | NEW YORK
+     20 | RESEARCH   | DALLAS
+     30 | SALES      | CHICAGO
+     40 | OPERATIONS | BOSTON
+(4 rows)
+
+[postgres@localhost bin]$
+=======================================
+psql -p 5433
+
+================================================================================================
+
+Backup and Restore in the pg
+================================================================================================================
+pg_restore :
+
+gunzip -c /pg_backup/backups/backup_edbstore10x_clone.gz | psql -p 5433 -U postgres -d edbstore10x_clone
+
+Full backup testing :
+Take the full backup :
+[postgres@localhost bin]$ ./pg_dump -p 5433 -U postgres -d edbstore10x_clone |gzip -c >/pg_backup/backups/backup_edbstore10x_clone.gz
+Restore full backup : 
+[postgres@localhost bin]$ gunzip -c /pg_backup/backups/backup_edbstore10x_clone.gz | psql -p 5433 -U postgres -d edbstore10x_clone
+
+
+Pg_base_backup :
+========================================================================================================================================
+Kill session : 
+SELECT pg_terminate_backend(<pid>);
+
+
+=====================================================================
+Tablespace management : 
+
+-- Temp tablespace management in postgres : 
+-- Create a shared temp tablespace
+CREATE TABLESPACE temp_tbs LOCATION '/pg_temp';
+
+-- Assign to a database
+ALTER DATABASE sales SET temp_tablespaces = 'temp_tbs';
+
+-- Assign to a different DB (shared usage)
+ALTER DATABASE hr SET temp_tablespaces = 'temp_tbs';
+
+-- OR give each DB its own
+CREATE TABLESPACE sales_temp LOCATION '/pg_sales_temp';
+ALTER DATABASE sales SET temp_tablespaces = 'sales_temp';
+=====================================================================
+Minor upgrade postgres from 15.12 to 15.15
+
+pg_ctl -D /pg_data/data1 stop -> Stop the postgres services
+As root :yum list available | grep postgresql15
+sudo yum update postgresql15\*
+# or for dnf
+sudo dnf update postgresql15*
+
+backup the config files  :
+/var/lib/pgsql/15/data/ and you want to store backup in /opt/backups
+sudo tar -czvf /opt/backups/postgresql_15.12_data_$(date +%Y%m%d_%H%M%S).tar.gz /var/lib/pgsql/15/data/
+
+Actual output : 
+
+[root@localhost ~]# sudo dnf update postgresql15*
+Last metadata expiration check: 3:29:27 ago on Tue 25 Nov 2025 01:27:13 AM EST.
+Dependencies resolved.
+=============================================================================================================================================================
+ Package                                     Architecture                   Version                                     Repository                      Size
+=============================================================================================================================================================
+Upgrading:
+ postgresql15                                x86_64                         15.15-1PGDG.rhel9                           pgdg15                         1.5 M
+ postgresql15-libs                           x86_64                         15.15-1PGDG.rhel9                           pgdg15                         304 k
+ postgresql15-server                         x86_64                         15.15-1PGDG.rhel9                           pgdg15                         6.1 M
+
+Transaction Summary
+=============================================================================================================================================================
+Upgrade  3 Packages
+
+Total download size: 8.0 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/3): postgresql15-libs-15.15-1PGDG.rhel9.x86_64.rpm                                                                        631 kB/s | 304 kB     00:00
+(2/3): postgresql15-15.15-1PGDG.rhel9.x86_64.rpm                                                                             2.3 MB/s | 1.5 MB     00:00
+(3/3): postgresql15-server-15.15-1PGDG.rhel9.x86_64.rpm                                                                      4.2 MB/s | 6.1 MB     00:01
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                        5.4 MB/s | 8.0 MB     00:01
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                     1/1
+  Upgrading        : postgresql15-libs-15.15-1PGDG.rhel9.x86_64                                                                                          1/6
+  Running scriptlet: postgresql15-libs-15.15-1PGDG.rhel9.x86_64                                                                                          1/6
+  Upgrading        : postgresql15-15.15-1PGDG.rhel9.x86_64                                                                                               2/6
+  Running scriptlet: postgresql15-15.15-1PGDG.rhel9.x86_64                                                                                               2/6
+  Running scriptlet: postgresql15-server-15.15-1PGDG.rhel9.x86_64                                                                                        3/6
+  Upgrading        : postgresql15-server-15.15-1PGDG.rhel9.x86_64                                                                                        3/6
+  Running scriptlet: postgresql15-server-15.15-1PGDG.rhel9.x86_64                                                                                        3/6
+  Running scriptlet: postgresql15-server-15.12-1PGDG.rhel9.x86_64                                                                                        4/6
+  Cleanup          : postgresql15-server-15.12-1PGDG.rhel9.x86_64                                                                                        4/6
+  Running scriptlet: postgresql15-server-15.12-1PGDG.rhel9.x86_64                                                                                        4/6
+  Cleanup          : postgresql15-15.12-1PGDG.rhel9.x86_64                                                                                               5/6
+  Running scriptlet: postgresql15-15.12-1PGDG.rhel9.x86_64                                                                                               5/6
+  Cleanup          : postgresql15-libs-15.12-1PGDG.rhel9.x86_64                                                                                          6/6
+  Running scriptlet: postgresql15-libs-15.12-1PGDG.rhel9.x86_64                                                                                          6/6
+  Verifying        : postgresql15-15.15-1PGDG.rhel9.x86_64                                                                                               1/6
+  Verifying        : postgresql15-15.12-1PGDG.rhel9.x86_64                                                                                               2/6
+  Verifying        : postgresql15-libs-15.15-1PGDG.rhel9.x86_64                                                                                          3/6
+  Verifying        : postgresql15-libs-15.12-1PGDG.rhel9.x86_64                                                                                          4/6
+  Verifying        : postgresql15-server-15.15-1PGDG.rhel9.x86_64                                                                                        5/6
+  Verifying        : postgresql15-server-15.12-1PGDG.rhel9.x86_64                                                                                        6/6
+
+Upgraded:
+  postgresql15-15.15-1PGDG.rhel9.x86_64           postgresql15-libs-15.15-1PGDG.rhel9.x86_64           postgresql15-server-15.15-1PGDG.rhel9.x86_64
+
+Complete!
+[root@localhost ~]#
+
+
+=====================================================================

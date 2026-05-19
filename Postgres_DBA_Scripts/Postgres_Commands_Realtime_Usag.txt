@@ -1,0 +1,497 @@
+active session:
+
++++++++++++++
+SELECT
+pid,
+user,
+pg_stat_activity.query_start,
+now() - pg_stat_activity.query_start AS query_time,
+query,
+state
+FROM pg_stat_activity
+WHERE (now() - pg_stat_activity.query_start) > interval '5 minutes' and state <> 'idle' order by 4 desc;
+
+Huge pagesg:
+ 
+grep -i hugepages /proc/meminfo
+ 
+
+
+postgres=# select pg_reload_conf();   reload 
+
+
+PARTITION WISE DATA :
+++++++++++++++++++++++++
+
+CS:
++++
+create or replace function
+count_rows(schema text, tablename text) returns integer
+as
+$body$
+declare
+ result integer;
+ query varchar;
+begin
+ query := 'SELECT count(1) FROM ' || schema || '.' || tablename;
+ execute query into result;
+ return result;
+end;
+$body$
+language plpgsql;
+select 
+ table_schema,
+ table_name, 
+ count_rows(table_schema, table_name)
+from information_schema.tables
+where 
+ table_schema  in ('kpubcs') and table_name like '%intervaldata_itvl_2024%'
+ and table_type='BASE TABLE'
+order by 2 asc;
+
+
+POSTGRES TABLE BACKUP:
+++++++++++++++++++++++++
+
+set search_path=graysoncs,public;
+create table  MeterLPChannels_bkp as SELECT * FROM MeterLPChannels MLPC WHERE MLPC.intervalFormatId = 6 AND MLPC.meterLPSetid IN (SELECT meterLPSetid FROM meterlpsets MLPS JOIN MeterConfiguration MC on MC.meterconfigurationid = MLPS.meterconfigurationid WHERE MC.meterModelId in (SELECT meterModelId FROM MeterModels WHERE UPPER(name) LIKE UPPER('%FOCUS%')) AND MLPC.datadefinitionid IN (2543, 2594, 5090, 73076, 73432, 130499, 70974));
+
+
+
+
+TABLESPACE
+++++++++++
+
+select spcname ,pg_tablespace_location(oid)from   pg_tablespace;
+
+
+
+Tracaction wraparound fix:
++++++++++++++++++++++++++++++++++++++++
+
+
+Assuming that you are experiencing txid wraparound risk (the most common one, as opposed to mxid wraparound risk), the quickest way is to manually vacuum each table with a high age:
+
+bash
+SELECT c.oid::regclass AS table_name,
+age(c.relfrozenxid) AS age,
+pg_size_pretty(pg_total_relation_size(c.oid)) AS table_total_size
+FROM pg_class c
+WHERE c.relkind IN ('r', 'm', 't')
+AND age(c.relfrozenxid) > current_setting('autovacuum_freeze_max_age')::bigint
+ORDER BY 2 DESC
+LIMIT 10;
+
+
+
+
+If you are on postgres 11+, run VACUUM (INDEX_CLEANUP OFF);
+
+
+
+If you wish to run on the whole database:
+++++++++++++++++++++++++++++++++++++++++++
+
+If you are on postgres 11+, run VACUUM (INDEX_CLEANUP OFF);
+
+If you are on postgres 10-, run VACUUM;
+
+
+
+
+
+** To check that no processes are preventing vacuum from freezing old tuples e.g stale replication slots, long running queries, prepared transactions, hot standby etc:
+ 
+SELECT (SELECT coalesce(max(age(backend_xmin)), 0)
+FROM pg_stat_activity) AS 
+oldest_xact_age,
+(SELECT coalesce(max(age(backend_xmin)), 0)
+FROM pg_stat_replication) AS oldest_standby_xact_age,
+(SELECT coalesce(max(age(transaction)), 0)
+FROM pg_prepared_xacts) AS oldest_prepared_xact_age,
+(SELECT greatest(coalesce(max(age(xmin)), 0), coalesce(max(age(catalog_xmin)), 0))
+FROM pg_replication_slots) AS oldest_replication_slot_age;
+
+
+** Figure out aged tables which need vaccume:
+ 
+SELECT c.oid::regclass AS table_name,
+age(c.relfrozenxid) AS age,
+pg_size_pretty(pg_total_relation_size(c.oid)) AS table_total_size
+FROM pg_class c
+WHERE c.relkind IN ('r', 'm', 't')
+AND age(c.relfrozenxid) > current_setting('autovacuum_freeze_max_age')::bigint
+ORDER BY 2 DESC
+LIMIT 10;
+
+
+Tracaction wraparound fix:
++++++++++++++++++++++++++++++++++++++++
+
+
+Assuming that you are experiencing txid wraparound risk (the most common one, as opposed to mxid wraparound risk), the quickest way is to manually vacuum each table with a high age:
+
+bash
+SELECT c.oid::regclass AS table_name,
+age(c.relfrozenxid) AS age,
+pg_size_pretty(pg_total_relation_size(c.oid)) AS table_total_size
+FROM pg_class c
+WHERE c.relkind IN ('r', 'm', 't')
+AND age(c.relfrozenxid) > current_setting('autovacuum_freeze_max_age')::bigint
+ORDER BY 2 DESC
+LIMIT 10;
+
+
+Postgres 11+:
++++++++++++++
+VACUUM (INDEX_CLEANUP OFF) <table_name>;
+
+
+Postgres 10-:
++++++++++++++
+VACUUM <table_name>;
+
+
+
+If you are on postgres 11+, run VACUUM (INDEX_CLEANUP OFF);
+
+
+If you are on postgres 10-, run VACUUM;
+
+
+
+If you wish to run on the whole database:
+++++++++++++++++++++++++++++++++++++++++++
+
+If you are on postgres 11+, run VACUUM (INDEX_CLEANUP OFF);
+
+If you are on postgres 10-, run VACUUM;
+
+
+
+
+You have an orphaned temporary table that is preventing vacuum from freezing old tuples. pg_temp_118.tt_tdlcache_endpointids has an age of 2,144,504,080.
+
+Please drop the table:
+
+
+drop table pg_temp_118.tt_tdlcache_endpointids;
+
+
+
+Afterwards, provide the new output:
++++++++++++++++++++++++++++++++++++++++
+SELECT (SELECT coalesce(max(age(backend_xmin)), 0)
+FROM pg_stat_activity) AS 
+oldest_xact_age,
+(SELECT coalesce(max(age(backend_xmin)), 0)
+FROM pg_stat_replication) AS oldest_standby_xact_age,
+(SELECT coalesce(max(age(transaction)), 0)
+FROM pg_prepared_xacts) AS oldest_prepared_xact_age,
+(SELECT greatest(coalesce(max(age(xmin)), 0), coalesce(max(age(catalog_xmin)), 0))
+FROM pg_replication_slots) AS oldest_replication_slot_age;
+```
+
+** To check that no processes are preventing vacuum from freezing old tuples e.g stale replication slots, long running queries, prepared transactions, hot standby etc:
+ 
+SELECT (SELECT coalesce(max(age(backend_xmin)), 0)
+FROM pg_stat_activity) AS 
+oldest_xact_age,
+(SELECT coalesce(max(age(backend_xmin)), 0)
+FROM pg_stat_replication) AS oldest_standby_xact_age,
+(SELECT coalesce(max(age(transaction)), 0)
+FROM pg_prepared_xacts) AS oldest_prepared_xact_age,
+(SELECT greatest(coalesce(max(age(xmin)), 0), coalesce(max(age(catalog_xmin)), 0))
+FROM pg_replication_slots) AS oldest_replication_slot_age;
+ 
+ 
+ 
+** Figure out aged tables which need vaccume:
+ 
+SELECT c.oid::regclass AS table_name,
+age(c.relfrozenxid) AS age,
+pg_size_pretty(pg_total_relation_size(c.oid)) AS table_total_size
+FROM pg_class c
+WHERE c.relkind IN ('r', 'm', 't')
+AND age(c.relfrozenxid) > current_setting('autovacuum_freeze_max_age')::bigint
+ORDER BY 2 DESC
+LIMIT 10;
+===================================
+
+With below query you can generate KILL SESSION commands:
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+SELECT 'select pg_terminate_backend(pid) from pg_stat_activity where pid = '''||pid||''' and pid <> pg_backend_pid();'
+FROM pg_stat_activity
+WHERE (now() - pg_stat_activity.query_start) > interval '5 minutes' and state <> 'idle';
+
+
+===============================
+
+active sessions with query in details:
+++++++++++++++++++++++++++++++++++++++
+
+SELECT pid, age(clock_timestamp(), query_start), datname, usename, query, state
+FROM pg_stat_activity
+WHERE state NOT LIKE 'idle%' AND query NOT ILIKE '%pg_stat_activity%'
+ORDER BY query_start desc;
+
+
+=====================================
+
+long running and active:
++++++++++++++++++++++++++
+SELECT
+  pid,
+  user,
+  pg_stat_activity.query_start,
+  now() - pg_stat_activity.query_start AS query_time,
+  query,
+  state
+FROM pg_stat_activity
+WHERE (now() - pg_stat_activity.query_start) > interval '5 minutes' and state <> 'idle';
+
+
+=============================================
+
+query time:
++++++++++++
+SELECT
+  pid,
+  user,
+  pg_stat_activity.query_start,
+  now() - pg_stat_activity.query_start AS query_time,
+  query,
+  state,
+  wait_event_type,
+  wait_event
+FROM pg_stat_activity
+WHERE (now() - pg_stat_activity.query_start) > interval '5 minutes';
+
+
+
+=================================================
+
+
+deadlock:
+++++++++++
+
+SELECT activity.pid,activity.usename,activity.query,blocking.pid AS blocking_id,blocking.query AS blocking_query FROM pg_stat_activity AS activity JOIN pg_stat_activity AS blocking ON blocking.pid = ANY(pg_blocking_pids(activity.pid));
+
+
+
+==================================
+
+
+Wait events:
++++++++++++++++
+
+select pid, usename, state, wait_event_type, wait_event,
+       pg_blocking_pids(pid) as blocked_by
+from pg_stat_activity;
+
+
+=====================================
+
+\d+ tbl_name   ---partitons check
+
+=====================================
+
+SELECT * FROM pg_stat_activity; ---check active sessions
+
+
+======================================
+
+Total connection details: (idle + non-idle)
+++++++++++++++++++++++++++++++++++++++++++++
+
+select 
+    A.total_connections, 
+    A.non_idle_connections, 
+    B.max_connections,
+    round((100 * A.total_connections::numeric / B.max_connections::numeric), 2) connections_utilization_pctg
+from
+  (select count(1) as total_connections, sum(case when state!='idle' then 1 else 0 end) as non_idle_connections from pg_stat_activity) A,
+  (select setting as max_connections from pg_settings where name='max_connections') B;
+  
+  
+=================================================
+
+max connections:
+++++++++++++++++++ 
+ cumberlanddb=# show max_connections;
+
+============================================
+non-idle connections number per database
+++++++++++++++++++++++++++++++++++++++++
+
+select 
+datname as db_name, 
+count(1) as num_non_idle_connections 
+from pg_stat_activity 
+where state!='idle' 
+group by 1 
+order by 2 desc;
+
+
+
+==================================================
+
+active sessions details:
+ +++++++++++++++++++++++
+select 
+datname as db_name, 
+query, 
+count(1) as num_non_idle_connections 
+from pg_stat_activity 
+where state!='idle' 
+group by 1, 2 
+order by 3 desc;
+
+
+=================================================
+connections busy where ?
+++++++++++++++++++++++++++
+
+SELECT datname, numbackends FROM pg_stat_database;
+
+
+=================================================
+
+
+frequent running queries:
++++++++++++++++++++++++++
+
+with
+a as (select dbid, queryid, query, calls s from pg_stat_statements),
+b as (select dbid, queryid, query, calls s from pg_stat_statements, pg_sleep(1))
+select
+        pd.datname as db_name, 
+        substr(a.query, 1, 400) as the_query, 
+        sum(b.s-a.s) as runs_per_second
+from a, b, pg_database pd
+where 
+  a.dbid= b.dbid 
+and 
+  a.queryid = b.queryid 
+and 
+  pd.oid=a.dbid
+group by 1, 2
+order by 3 desc;
+
+
+=================================================
+
+check the last date and time the statistics were updated for each table in the PostgreSQL DB
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+select
+  schemaname,
+  relname,
+  DATE_TRUNC('minute', last_analyze) last_analyze,
+  DATE_TRUNC('minute', last_autoanalyze) last_autoanalyze
+from
+  pg_stat_all_tables
+where
+  schemaname = 'public'
+order by
+  last_analyze desc NULLS FIRST,
+  last_autoanalyze desc NULLS FIRST;
+
+
+==========================================================
+
+To check information about dead tuples, and when vacuum / autovacuum  was run for each table in the PostgreSQL DB Server for specific DB, connect to the DB and run the following
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+  select 
+  schemaname, 
+  relname, 
+  n_tup_ins, 
+  n_tup_upd, 
+  n_tup_del, 
+  n_live_tup, 
+  n_dead_tup, 
+  DATE_TRUNC('minute', last_vacuum) last_vacuum, 
+  DATE_TRUNC('minute', last_autovacuum) last_autovacuum
+from 
+  pg_stat_all_tables 
+where 
+  schemaname = 'public'
+order by 
+  n_dead_tup desc;
+
+
+===============================================================
+
+Creating a hot standby in postgres database : 
+
+https://dbtut.com/index.php/2022/04/27/creating-a-hot-standby-in-edb-postgresql/
+
+Information
+\l (List Databases)
+\l+ (Database Detail)
+\d name (Describe Relation)
+\d+ name (Detailed Description)
+\dn (List Schemas)
+\dt (List Tables)
+\di (List Indexes)
+\dv (List Views)
+\dy (List Triggers)
+\df (List Functions)
+\dS (List System Tables)
+\du (List Users)
+\dg (List Groups)
+\db meta-command tablespace
+
+
+=========================================================================
+
+EXPLAIN PLAN:
+"explain analyze"  will run the query and execution plan
+
+=======================================================================
+analyse check:
+++++++++++++++++
+
+SELECT schemaname, relname, last_autoanalyze, last_analyze FROM pg_stat_all_tables where last_analyze is not null order by last_analyze asc;
+
+========================================================================
+
+Performance related :
+++++++++++++++++++++
+
+wal_log_hints
+
+
+max_wal_size = 3GB
+checkpoint_timeout = 5min
+
+
+=========================================================================
+
+** Figure out aged tables which need vaccume:
+ 
+SELECT c.oid::regclass AS table_name,
+age(c.relfrozenxid) AS age,
+pg_size_pretty(pg_total_relation_size(c.oid)) AS table_total_size
+FROM pg_class c
+WHERE c.relkind IN ('r', 'm', 't')
+AND age(c.relfrozenxid) > current_setting('autovacuum_freeze_max_age')::bigint
+ORDER BY 2 DESC
+LIMIT 10;
+
+it will list tables, which needs vaccum, these 2 must be setup for all emerge DBs
+
+
+==================================================================================
+Checkpoints happening :
+
+SELECT 
+    checkpoints_timed,
+    checkpoints_req,
+    checkpoint_write_time,
+    checkpoint_sync_time
+FROM pg_stat_bgwriter;
+
+
+==================================================================================
+  

@@ -1,0 +1,382 @@
+[root@test-machine01 ~]# su - postgres
+Last login: Wed Jun 16 17:44:29 +03 2021 on pts/2
+-bash-4.2$
+-bash-4.2$
+-bash-4.2$ ssh-keygen -t rsa
+Generating public/private rsa key pair.
+Enter file in which to save the key (/var/lib/pgsql/.ssh/id_rsa):
+Created directory '/var/lib/pgsql/.ssh'.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /var/lib/pgsql/.ssh/id_rsa.
+Your public key has been saved in /var/lib/pgsql/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:jiouqVEgyZz+dmsHM+H0yzn4GgdhYnqBkbJ3Es/ralw postgres@test-machine02
+The key's randomart image is:
++---[RSA 2048]----+
+| ..              |
+|+o=              |
+|=* B o           |
+|+.= Bo.          |
+| +.+ooo S        |
+| .o E=.+         |
+|.o = oB.+        |
+|o.= o++*         |
+|o+oooo+..        |
++----[SHA256]-----+
+-bash-4.2$
+   
+-bash-4.2$ ls -ltr .ssh
+total 8
+-rw-r--r--. 1 postgres postgres  405 Jun 22 10:12 id_rsa.pub
+-rw-------. 1 postgres postgres 1679 Jun 22 10:12 id_rsa
+-bash-4.2$
+   
+-bash-4.2$ ssh-copy-id -i ~/.ssh/id_rsa.pub postgres@test-machine02
+/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/var/lib/pgsql/.ssh/id_rsa.pub"
+/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+barman@test-machine01's password:
+   
+Number of key(s) added: 1
+   
+Now try logging into the machine, with:   "ssh 'postgres@test-machine02'"
+and check to make sure that only the key(s) you wanted were added.
+   
+-bash-4.2$
+-bash-4.2$ ssh 'postgres@test-machine02'
+Last login: Tue Jun 22 10:32:10 2021
+-bash-4.2$
+-bash-4.2$ exit
+logout
+Connection to test-machine02 closed.
+-bash-4.2$
+
+[root@test-machine01 ~]# su - postgres
+Last login: Thu Jul 22 13:55:34 +03 2021 on pts/2
+-bash-4.2$ psql
+psql (13.1)
+Type "help" for help.
+ 
+postgres=# CREATE USER repluser REPLICATION PASSWORD 'Root@1234';
+CREATE ROLE
+postgres=#
+ 
+postgres=# alter system set archive_mode=on;
+ALTER SYSTEM
+postgres=# alter system set archive_command='test ! -f postgres@test-machine02:/u01/wal_archive/%f && rsync -a %p postgres@test-machine02:/u01/wal_archive/%f';
+ALTER SYSTEM
+postgres=# alter system set wal_keep_size='320 MB';
+ALTER SYSTEM
+postgres=# alter system set max_slot_wal_keep_size='1024 MB';
+ALTER SYSTEM
+postgres=# alter system set wal_log_hints=on;
+ALTER SYSTEM
+postgres=#
+ 
+[root@test-machine01 ~]#
+[root@test-machine01 ~]# systemctl restart postgresql-13
+[root@test-machine01 ~]#
+ 
+postgres=#
+postgres=#
+postgres=# select name,setting,unit from pg_settings where name in ('wal_level','archive_mode','archive_command','max_wal_senders','wal_keep_size','max_slot_wal_keep_size','wal_log_hints');
+          name          |                                                     setting                                                      | unit
+------------------------+------------------------------------------------------------------------------------------------------------------+------
+ archive_command        | test ! -f postgres@test-machine02:/u01/wal_archive/%f && rsync -a %p postgres@test-machine02:/u01/wal_archive/%f |
+ archive_mode           | on                                                                                                               |
+ max_slot_wal_keep_size | 1024                                                                                                             | MB
+ max_wal_senders        | 10                                                                                                               |
+ wal_keep_size          | 320                                                                                                              | MB
+ wal_level              | replica                                                                                                          |
+ wal_log_hints          | on                                                                                                               |
+(7 rows)
+ 
+postgres=#
+
+[root@test-machine01 ~]# su - postgres
+Last login: Thu Jul 22 12:06:05 +03 2021 on pts/3
+-bash-4.2$ psql
+psql (13.1)
+Type "help" for help
+postgres=#
+postgres=# select pg_switch_wal();
+ pg_switch_wal
+---------------
+ 0/240000F0
+(1 row)
+  
+-bash-4.2$ hostname
+test-machine02
+-bash-4.2$ pwd
+/u01/wal_archive
+-bash-4.2$
+-bash-4.2$ ls -ltr
+total 16384
+-rw-r-----. 1 postgres postgres 16777216 Jul 22 13:51 000000050000000000000024
+-bash-4.2$
+
+-bash-4.2$ pwd
+/var/lib/pgsql/13/data
+-bash-4.2$
+-bash-4.2$ vi pg_hba.conf
+host    replication     all             192.168.114.0/24        scram-sha-256
+:wq!
+  
+-bash-4.2$ pwd
+/var/lib/pgsql/13/data
+-bash-4.2$ cat pg_hba.conf
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+  
+# "local" is for Unix domain socket connections only
+local   all             all                                     peer
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            scram-sha-256
+host    all             all             192.168.114.0/24        scram-sha-256
+# IPv6 local connections:
+host    all             all             ::1/128                 scram-sha-256
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                                     peer
+host    replication     all             127.0.0.1/32            scram-sha-256
+host    replication     all             ::1/128                 scram-sha-256
+host    replication     all             192.168.114.0/24        scram-sha-256
+-bash-4.2$
+  
+postgres=#  SELECT pg_reload_conf();
+ pg_reload_conf
+----------------
+ t
+(1 row)
+  
+postgres=#
+
+[root@test-machine02 ~]# systemctl stop postgresql-13
+ 
+[root@test-machine02 ~]#
+[root@test-machine02 ~]# rm -rf /u01/pg1_tbls/*
+[root@test-machine02 ~]# rm -rf /u01/pg2_tbls/*
+[root@test-machine02 ~]# rm -rf /var/lib/pgsql/13/data/*
+[root@test-machine02 ~]#
+ 
+[root@test-machine02 ~]# su - postgres
+Last login: Sun Jul 25 13:34:21 +03 2021 on pts/1
+-bash-4.2$
+-bash-4.2$ pg_basebackup -h test-machine01 -p 5432 -U repluser -c fast -C -S slot_standby1 -R -D /var/lib/pgsql/13/data  -Fp -Xs -P -v
+Password:
+pg_basebackup: initiating base backup, waiting for checkpoint to complete
+pg_basebackup: checkpoint completed
+pg_basebackup: write-ahead log start point: 0/39000028 on timeline 5
+pg_basebackup: starting background WAL receiver
+pg_basebackup: created replication slot "slot_standby1"
+74399/74399 kB (100%), 3/3 tablespaces
+pg_basebackup: write-ahead log end point: 0/39000100
+pg_basebackup: waiting for background process to finish streaming ...
+pg_basebackup: syncing data to disk ...
+pg_basebackup: renaming backup_manifest.tmp to backup_manifest
+pg_basebackup: base backup completed
+-bash-4.2$
+-bash-4.2$
+ 
+-bash-4.2$
+-bash-4.2$ cd /var/lib/pgsql/13/data
+-bash-4.2$
+-bash-4.2$ ls -ltr
+total 388
+drwx------. 3 postgres postgres     84 Jul 25 12:52 pg_wal
+-rw-------. 1 postgres postgres    226 Jul 25 12:52 backup_label
+drwx------. 6 postgres postgres     54 Jul 25 12:52 base
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_replslot
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_notify
+drwx------. 4 postgres postgres     36 Jul 25 12:52 pg_multixact
+drwx------. 4 postgres postgres     68 Jul 25 12:52 pg_logical
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_dynshmem
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_commit_ts
+drwx------. 2 postgres postgres   4096 Jul 25 12:52 log
+drwx------. 2 postgres postgres     18 Jul 25 12:52 pg_xact
+-rw-------. 1 postgres postgres      3 Jul 25 12:52 PG_VERSION
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_twophase
+drwx------. 2 postgres postgres     32 Jul 25 12:52 pg_tblspc
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_subtrans
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_stat_tmp
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_stat
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_snapshots
+drwx------. 2 postgres postgres      6 Jul 25 12:52 pg_serial
+-rw-------. 1 postgres postgres   1636 Jul 25 12:52 pg_ident.conf
+-rw-------. 1 postgres postgres  28083 Jul 25 12:52 postgresql.conf
+-rw-------. 1 postgres postgres   4704 Jul 25 12:52 pg_hba.conf
+-rw-------. 1 postgres postgres    583 Jul 25 12:52 old_postgresql.auto.conf
+drwx------. 2 postgres postgres   4096 Jul 25 12:52 global
+-rw-------. 1 postgres postgres     30 Jul 25 12:52 current_logfiles
+-rw-------. 1 postgres postgres    259 Jul 25 12:52 backup_label.old
+-rw-------. 1 postgres postgres    601 Jul 25 12:52 postgresql.auto.conf
+-rw-------. 1 postgres postgres      0 Jul 25 12:52 standby.signal
+-rw-------. 1 postgres postgres 320032 Jul 25 12:52 backup_manifest
+-bash-4.2$
+
+
+
+[root@test-machine02 ~]#
+[root@test-machine02 ~]# systemctl start postgresql-13
+[root@test-machine02 ~]#
+ 
+ 
+postgres=#
+postgres=# select pg_is_in_recovery();
+ pg_is_in_recovery
+-------------------
+ t
+(1 row)
+ 
+postgres=#
+ 
+postgres=# CREATE TABLE my_table_test(col1 varchar, col2 varchar);
+ERROR:  cannot execute CREATE TABLE in a read-only transaction
+postgres=#
+ 
+-bash-4.2$ pwd
+/var/lib/pgsql/13/data/log
+-bash-4.2$ vi postgresql-Sun.log
+2021-07-25 12:55:34.826 +03 [130312] LOG:  starting PostgreSQL 13.2 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-44), 64-bit
+2021-07-25 12:55:34.828 +03 [130312] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2021-07-25 12:55:34.828 +03 [130312] LOG:  listening on IPv6 address "::", port 5432
+2021-07-25 12:55:34.829 +03 [130312] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2021-07-25 12:55:34.830 +03 [130312] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2021-07-25 12:55:34.833 +03 [130316] LOG:  database system was interrupted; last known up at 2021-07-25 12:52:59 +03
+2021-07-25 12:55:34.858 +03 [130316] LOG:  entering standby mode
+2021-07-25 12:55:34.860 +03 [130316] LOG:  redo starts at 0/39000028
+2021-07-25 12:55:34.860 +03 [130316] LOG:  consistent recovery state reached at 0/39000100
+2021-07-25 12:55:34.861 +03 [130312] LOG:  database system is ready to accept read only connections
+2021-07-25 12:55:34.895 +03 [130320] LOG:  started streaming WAL from primary at 0/3A000000 on timeline 5
+
+Primary DB :
+
+postgres=#
+postgres=# \connect sample1
+You are now connected to database "sample1" as user "postgres".
+sample1=#
+sample1=# CREATE TABLE my_table_test1 (col1 varchar, col2 varchar);
+CREATE TABLE
+sample1=# INSERT INTO my_table_test1 VALUES ('row1', 'this is row 1'), ('row2', 'this is row 2');
+INSERT 0 2
+sample1=#
+
+Standby DB
+
+postgres=#
+postgres=# \connect sample1
+You are now connected to database "sample1" as user "postgres".
+sample1=#
+sample1=# select * from my_table_test1 ;
+ col1 |     col2
+------+---------------
+ row1 | this is row 1
+ row2 | this is row 2
+(2 rows)
+ 
+
+Step 7. Monitor Stream Replication
+
+Primary DB :-
+
+postgres=# \x
+Expanded display is on.
+postgres=#
+postgres=# select pg_current_wal_lsn ();
+-[ RECORD 1 ]------+-----------
+pg_current_wal_lsn | 0/3B000000
+ 
+postgres=#
+postgres=# select * from pg_stat_replication;
+-[ RECORD 1 ]----+------------------------------
+pid              | 39216
+usesysid         | 33764
+usename          | repluser
+application_name | walreceiver
+client_addr      | 192.168.114.176
+client_hostname  |
+client_port      | 35618
+backend_start    | 2021-07-25 12:55:42.745883+03
+backend_xmin     |
+state            | streaming
+sent_lsn         | 0/3B000000
+write_lsn        | 0/3B000000
+flush_lsn        | 0/3B000000
+replay_lsn       | 0/3B000000
+write_lag        |
+flush_lag        |
+replay_lag       |
+sync_priority    | 0
+sync_state       | async
+reply_time       | 2021-07-25 13:49:19.786463+03
+ 
+postgres=#  select * from pg_replication_slots;
+-[ RECORD 1 ]-------+--------------
+slot_name           | slot_standby1
+plugin              |
+slot_type           | physical
+datoid              |
+database            |
+temporary           | f
+active              | t
+active_pid          | 39216
+xmin                |
+catalog_xmin        |
+restart_lsn         | 0/3B000000
+confirmed_flush_lsn |
+wal_status          | reserved
+safe_wal_size       | 1090519040
+
+ 
+postgres=#
+postgres=# select
+postgres-#   pid,
+postgres-#   application_name,
+postgres-#   pg_wal_lsn_diff(pg_current_wal_lsn(), sent_lsn) sending_lag,
+postgres-#   pg_wal_lsn_diff(sent_lsn, flush_lsn) receiving_lag,
+postgres-#   pg_wal_lsn_diff(flush_lsn, replay_lsn) replaying_lag,
+postgres-#   pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) total_lag
+postgres-# from pg_stat_replication;
+-[ RECORD 1 ]----+------------
+pid              | 39216
+application_name | walreceiver
+sending_lag      | 0
+receiving_lag    | 0
+replaying_lag    | 0
+total_lag        | 0
+
+Standby DB :- 
+
+postgres=# select pg_last_wal_receive_lsn ();
+-[ RECORD 1 ]-----------+-----------
+pg_last_wal_receive_lsn | 0/3B000000
+ 
+postgres=# select * from pg_stat_wal_receiver;
+-[ RECORD 1 ]---------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+pid                   | 130320
+status                | streaming
+receive_start_lsn     | 0/3A000000
+receive_start_tli     | 5
+written_lsn           | 0/3B000000
+flushed_lsn           | 0/3B000000
+received_tli          | 5
+last_msg_send_time    | 2021-07-25 13:49:37.653767+03
+last_msg_receipt_time | 2021-07-25 13:49:29.785219+03
+latest_end_lsn        | 0/3B000000
+latest_end_time       | 2021-07-25 13:07:59.720781+03
+slot_name             | slot_standby1
+sender_host           | test-machine01
+sender_port           | 5432
+conninfo              | user=repluser password=******** channel_binding=prefer dbname=replication host=test-machine01 port=5432 fallback_application_name=walreceiver sslmode=prefer sslcompression=0 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres target_session_attrs=any
+ 
+postgres=#
+postgres=# select pg_is_in_recovery(),pg_is_wal_replay_paused(), pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn(), pg_last_xact_replay_timestamp();
+-[ RECORD 1 ]-----------------+------------------------------
+pg_is_in_recovery             | t
+pg_is_wal_replay_paused       | f
+pg_last_wal_receive_lsn       | 0/3B000000
+pg_last_wal_replay_lsn        | 0/3B000000
+pg_last_xact_replay_timestamp | 2021-07-25 12:58:31.030197+03
+ 
+postgres=#
+postgres=#

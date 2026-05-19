@@ -1,0 +1,62 @@
+#!/bin/bash
+
+set -e  # Fail immediately if any command fails
+
+echo "===== Starting RMAN Backup Job ====="
+
+SCRIPT="/home/oracle/scripting/rmanbackup_full.sh"
+BACKUP_BASE="/u01/rman_backups"
+
+# Run backup and capture exit status
+echo "Running RMAN script..."
+
+if ! sudo -u oracle $SCRIPT; then
+    echo "❌ ERROR: RMAN backup script execution failed"
+    exit 1
+fi
+
+echo "RMAN script executed successfully"
+
+# Get latest backup directory
+LATEST_BACKUP_DIR=$(ls -td $BACKUP_BASE/*/ 2>/dev/null | head -1)
+
+if [ -z "$LATEST_BACKUP_DIR" ]; then
+    echo "❌ ERROR: No backup directory found"
+    exit 1
+fi
+
+echo "Latest backup directory: $LATEST_BACKUP_DIR"
+
+# Check if backup files exist
+BACKUP_FILES_COUNT=$(ls $LATEST_BACKUP_DIR/*.bkp 2>/dev/null | wc -l)
+
+if [ "$BACKUP_FILES_COUNT" -eq 0 ]; then
+    echo "❌ ERROR: No backup files found in $LATEST_BACKUP_DIR"
+    exit 1
+fi
+
+echo "✅ Backup files found: $BACKUP_FILES_COUNT"
+
+# Get latest RMAN log
+LATEST_LOG=$(ls -t $BACKUP_BASE/rman_backup_*.log 2>/dev/null | head -1)
+
+if [ -z "$LATEST_LOG" ]; then
+    echo "❌ ERROR: RMAN log file not found"
+    exit 1
+fi
+
+echo "Latest RMAN log: $LATEST_LOG"
+
+echo "===== RMAN Log Summary ====="
+tail -20 $LATEST_LOG
+
+# Check for RMAN/ORA errors in log
+if grep -E "RMAN-|ORA-" $LATEST_LOG | grep -v "RMAN-03009" >/dev/null; then
+    echo "❌ ERROR: RMAN reported errors in log"
+    grep -E "RMAN-|ORA-" $LATEST_LOG
+    exit 1
+fi
+
+echo "✅ No RMAN errors found in log"
+
+echo "===== RMAN Backup Completed Successfully ====="

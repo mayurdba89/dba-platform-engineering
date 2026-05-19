@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+
+    environment {
+        DB_HOST = "192.168.139.129"
+        DB_PORT = "1521"
+    }
+
+    parameters {
+        string(name: 'DB_USERNAME', description: 'New DB Username')
+        password(name: 'DB_PASSWORD', description: 'New DB Password')
+        string(name: 'PDB_NAME', defaultValue: 'PRODB', description: 'Target PDB Name')
+    }
+
+    stages {
+
+        stage('Validate Input') {
+            steps {
+                script {
+                    if (!params.DB_USERNAME.matches("[A-Za-z0-9_]+")) {
+                        error("Invalid username format")
+                    }
+                    if (!params.PDB_NAME.matches("[A-Za-z0-9_]+")) {
+                        error("Invalid PDB name")
+                    }
+                }
+            }
+        }
+
+        stage('Create User in PDB') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'oracle-admin',
+                    usernameVariable: 'ADMIN_USER',
+                    passwordVariable: 'ADMIN_PASS'
+                )]) {
+
+                    sh '''
+                    set +x
+
+                    export ORACLE_HOME=/u01/app/oracle/product/19c/dbhome_2
+                    export PATH=$ORACLE_HOME/bin:$PATH
+
+                    echo "Creating user in PDB: $PDB_NAME"
+
+                    sqlplus -s $ADMIN_USER/$ADMIN_PASS@$DB_HOST:$DB_PORT/$PDB_NAME <<EOF
+                    SET SERVEROUTPUT ON
+
+                    ALTER SESSION SET CONTAINER = $PDB_NAME;
+
+                    DECLARE
+                        v_count NUMBER;
+                        v_sql   VARCHAR2(1000);
+                    BEGIN
+                        SELECT COUNT(*) INTO v_count 
+                        FROM dba_users 
+                        WHERE username = UPPER('$DB_USERNAME');
+
+                        IF v_count = 0 THEN
+                            v_sql := 'CREATE USER ' || '$DB_USERNAME' || ' IDENTIFIED BY "' || '$DB_PASSWORD' || '"';
+                            EXECUTE IMMEDIATE v_sql;
+
+                            EXECUTE IMMEDIATE 'GRANT CONNECT TO ' || '$DB_USERNAME';
+
+                            DBMS_OUTPUT.PUT_LINE('User created in ' || '$PDB_NAME');
+                        ELSE
+                            DBMS_OUTPUT.PUT_LINE('User already exists in ' || '$PDB_NAME');
+                        END IF;
+                    END;
+                    /
+                    EXIT;
+EOF
+                    '''
+                }
+            }
+        }
+    }
+}

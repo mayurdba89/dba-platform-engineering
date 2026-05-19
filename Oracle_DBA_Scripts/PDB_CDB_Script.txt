@@ -1,0 +1,89 @@
+#!/bin/bash
+
+#
+
+### Usage: ScriptName <CDB_NAME> <PDB_NAME>
+
+export cdb_name=$1
+
+export pdb_name=$2
+
+if [ $# -lt 2 ]
+
+then
+
+       echo ''
+
+       echo "Usage:   ./`basename $0` <CDB_NAME> <PDB_NAME>"
+
+       echo ''
+
+       exit 1
+
+fi
+
+ 
+
+if [ -z "${cdb_name}" ]
+
+then
+
+  echo "********************"
+
+  echo "No CDB name provided. Exiting..."
+
+  echo "********************"
+
+  exit 1
+
+fi
+
+ 
+
+if [ -z "${pdb_name}" ]
+
+then
+
+  echo "********************"
+
+  echo "No PDB name provided. Exiting..."
+
+  echo "********************"
+
+  exit 1
+
+fi
+
+source /home/oracle/${cdb_name}.env
+
+sqlplus -S "/as sysdba" <<EOF
+
+spool $LOGFILE
+
+set echo on
+
+set lines 300
+
+col host_name for a20
+
+select distinct name, instance_name ,host_name ,database_role, log_mode,open_mode,to_char(startup_time, 'yyyy:mm:dd hh24:mi:ss'),version from gv\$database , gv\$instance;
+
+select name,open_mode from gv\$pdbs;
+
+show parameter target_pdbs;
+
+alter session set container=${pdb_name}
+
+/
+
+show con_name;
+
+select NAME,BLOCKED from V\$active_services;
+
+select tablespace_name,encrypted from dba_Tablespaces;
+
+exit;
+
+ 
+
+EOF
